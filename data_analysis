@@ -49,6 +49,19 @@ display(null_percentage)
 # Find out the columns that have "customer" or "party" in their name
 target_columns = [col for col in df.columns if "customer" in col.lower() or "party" in col.lower()]
 
+# Identify columns containing 'customer' or 'party'
+keywords = ['customer', 'party']
+target_columns = df.columns[df.columns.str.contains('|'.join(keywords), case=False)].tolist()
+
+# Calculate null value statistics for the target columns
+null_counts = df[target_columns].isnull().sum()
+null_percentages = (null_counts / len(df)) * 100
+
+# Exclude columns where the percentage of null values is 100%
+target_columns = [col for col in target_columns if null_percentages[col] < 100]
+
+
+
 # Create a DataFrame with the required details
 required_details = pd.DataFrame({
     'Column': target_columns,
