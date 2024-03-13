@@ -1,0 +1,75 @@
+import pandas as pd
+import numpy as np
+from IPython.display import display, Markdown
+
+# Display Markdown text
+display(Markdown("""
+## Objective
+To process a pandas DataFrame, identify specific columns, calculate null value statistics, and output the results into a well-formatted Excel file.
+
+## Approach
+The code will first define a sample DataFrame. Then, it will identify columns containing specific keywords, calculate null value statistics, and finally, output these details into an Excel file with each category of information in separate tabs.
+
+## Method
+"""))
+
+# Create a sample DataFrame with 20 columns
+data = {
+    'customer_id': [1, 2, np.nan, 4, 5],
+    'customer_name': ['Alice', 'Bob', 'Charlie', np.nan, 'Eve'],
+    'party_size': [5, np.nan, 3, 8, 2],
+    # ... add more columns as needed
+}
+df = pd.DataFrame(data)
+
+# Add more columns with different data types and null values
+df['order_date'] = pd.to_datetime(['2021-01-01', np.nan, '2021-01-03', '2021-01-04', '2021-01-05'])
+df['total_amount'] = pd.Series([100.5, 200.75, np.nan, 150.0, 175.25])
+# ... add more columns as needed
+
+# Display the DataFrame
+print("Sample DataFrame:")
+display(df)
+
+# Find out the type of columns
+column_types = df.dtypes.to_frame('Type')
+print("\nColumn Types:")
+display(column_types)
+
+# Check for null values for each column
+null_values = df.isnull().sum().to_frame('Null Count')
+print("\nNull Values Count:")
+display(null_values)
+
+# Percentage of total null values for each column
+null_percentage = ((df.isnull().sum() / len(df)) * 100).to_frame('Null Percentage')
+print("\nNull Values Percentage:")
+display(null_percentage)
+
+# Find out the columns that have "customer" or "party" in their name
+target_columns = [col for col in df.columns if "customer" in col.lower() or "party" in col.lower()]
+
+# Create a DataFrame with the required details
+required_details = pd.DataFrame({
+    'Column': target_columns,
+    'Type': [df[col].dtype for col in target_columns],
+    'Null Count': [df[col].isnull().sum() for col in target_columns],
+    'Null Percentage': [(df[col].isnull().sum() / len(df[col])) * 100 for col in target_columns]
+})
+print("\nRequired Details:")
+display(required_details)
+
+# Data from the shortlisted columns
+data_from_columns = df[target_columns]
+print("\nData from the Shortlisted Columns:")
+display(data_from_columns)
+
+# Save the output information in an Excel file with separate tabs
+with pd.ExcelWriter('output_information.xlsx') as writer:
+    column_types.to_excel(writer, sheet_name='Column Types', index_label='Column')
+    null_values.to_excel(writer, sheet_name='Null Values Count', index_label='Column')
+    null_percentage.to_excel(writer, sheet_name='Null Values Percentage', index_label='Column')
+    required_details.to_excel(writer, sheet_name='Required Details', index=False)
+    data_from_columns.to_excel(writer, sheet_name='Data from Columns', index_label='Index')
+
+print("\nOutput information has been saved to 'output_information.xlsx'.")
