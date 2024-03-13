@@ -1,0 +1,42 @@
+import pandas as pd
+import numpy as np
+
+# Sample DataFrame creation
+data = {
+    'customer_id': [1, 2, np.nan, 4, 5],
+    'customer_name': ['Alice', 'Bob', 'Charlie', np.nan, 'Eve'],
+    'party_size': [5, np.nan, 3, 8, 2],
+    'order_date': pd.to_datetime(['2021-01-01', np.nan, '2021-01-03', '2021-01-04', '2021-01-05']),
+    'total_amount': pd.Series([100.5, 200.75, np.nan, 150.0, 175.25]),
+    # ... add more columns as needed
+}
+df = pd.DataFrame(data)
+
+# Count of columns for various data types
+data_types_count = df.dtypes.value_counts()
+
+# Calculate null value percentages for each column
+null_percentage = (df.isnull().sum() / len(df)) * 100
+
+# Define the buckets for null percentage categories
+buckets = {
+    '0% Null Values': (null_percentage == 0),
+    '1-30% Null Values': (null_percentage > 0) & (null_percentage <= 30),
+    '31-60% Null Values': (null_percentage > 30) & (null_percentage <= 60),
+    '61-100% Null Values': (null_percentage > 60)
+}
+
+# Categorize columns based on null percentage
+null_categories = {key: null_percentage[value].count() for key, value in buckets.items()}
+
+# Create a DataFrame for null percentage categories
+null_categories_df = pd.DataFrame(list(null_categories.items()), columns=['Category', 'Number of Columns'])
+
+# Exclude columns where the percentage of null values is 100%
+df = df.loc[:, (null_percentage < 100).values]
+
+# Display the results
+print("Count of columns for various data types:")
+print(data_types_count)
+print("\nNumber of columns in null percentage categories:")
+print(null_categories_df)
