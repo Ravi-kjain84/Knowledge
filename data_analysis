@@ -98,15 +98,3 @@ print(single_string)
 
 -----------------------------------------------
 
-Following our discussion, I conducted an analysis of the FCDP dataset and narrowed down the customer data according to the chosen sample (Entity - 3607, CORP - 100 samples). My approach included a review of IP SDI, transactions SDI (Retail, Wholesale, Trade) and RWA output. Here’s a concise summary of the methodology:
-
-Key Points:
-
-IP SDI contains most expected data.
-Some RWA output columns offer valuable customer rating insights.
-Transaction SDIs’ customer data is mostly reflected in IP Source SDI.
-
-
-As anticipated, the majority of columns were found within the IP SDI.
-A selection of columns from the RWA output, particularly those pertaining to customer ratings, appear to be valuable for enhancing customer profiles.
-The customer-related data encountered in the Transaction SDIs are largely mirrored in the IP Source SDI.
