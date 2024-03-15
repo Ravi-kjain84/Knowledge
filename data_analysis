@@ -86,3 +86,12 @@ with pd.ExcelWriter('output_information.xlsx') as writer:
     data_from_columns.to_excel(writer, sheet_name='Data from Columns', index_label='Index')
 
 print("\nOutput information has been saved to 'output_information.xlsx'.")
+---------------------
+
+# Your list of strings
+list_of_strings = ['item1', 'item2', 'item3', 'item4']
+
+# Convert list items into a single string with each item in single quotes and comma-separated
+single_string = ', '.join(f"'{item}'" for item in list_of_strings)
+
+print(single_string)
