@@ -150,3 +150,51 @@ dataset_id = 'your_dataset_id'
 schema_df = fetch_schema(project_id, dataset_id)
 print("Schema with Categories:")
 print(schema_df.head())
+
+
+-------------------------------------------------------------------------------------
+
+from google.cloud import bigquery
+import pandas as pd
+
+# Function to fetch schema for a given project and dataset
+def fetch_schema(project_datasets):
+    client = bigquery.Client()
+    all_dataframes = []
+
+    for project_id, dataset_id in project_datasets:
+        query = f"""
+            SELECT
+                table_name,
+                column_name,
+                data_type
+            FROM
+                `{project_id}.{dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+            ORDER BY
+                table_name,
+                ordinal_position
+        """
+        query_job = client.query(query)
+        schema_results = query_job.result()
+        schema_df = pd.DataFrame(schema_results)
+
+        # Add project and dataset columns
+        schema_df['Project'] = project_id
+        schema_df['Dataset'] = dataset_id
+
+        all_dataframes.append(schema_df)
+
+    # Concatenate all dataframes
+    result_df = pd.concat(all_dataframes, ignore_index=True)
+    
+    return result_df
+
+# Example usage
+project_datasets = [
+    ('project1_id', 'dataset1_id'),
+    ('project2_id', 'dataset2_id')
+]
+
+schema_df = fetch_schema(project_datasets)
+print("Combined Schema:")
+print(schema_df.head())
