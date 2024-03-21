@@ -77,4 +77,55 @@ def main():
     print(profiling_df.head())
 
 if __name__ == "__main__":
-    main()
+    from google.cloud import bigquery
+import pandas as pd
+
+# Function to fetch schema for a given project and dataset
+def fetch_schema(project_id, dataset_id):
+    client = bigquery.Client()
+    query = f"""
+        SELECT
+            table_name,
+            column_name,
+            data_type
+        FROM
+            `{project_id}.{dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+        ORDER BY
+            table_name,
+            ordinal_position
+    """
+    query_job = client.query(query)
+    schema_results = query_job.result()
+    schema_df = pd.DataFrame(schema_results)
+    return schema_df
+
+# Function to compare schemas and find differences
+def compare_schemas(projects):
+    all_tables = {}
+    for project_id, dataset_id in projects:
+        schema_df = fetch_schema(project_id, dataset_id)
+        tables = set(schema_df['table_name'])
+        all_tables[project_id] = tables
+    
+    common_tables = set.intersection(*all_tables.values())
+    unique_tables = {project_id: tables - common_tables for project_id, tables in all_tables.items()}
+    
+    print("Common Tables:")
+    print(common_tables)
+    print("\nUnique Tables:")
+    for project_id, tables in unique_tables.items():
+        print(f"{project_id}: {tables}")
+
+# List of projects and datasets to compare
+projects = [
+    ('project1_id', 'dataset1_id'),
+    ('project2_id', 'dataset2_id'),
+    ('project3_id', 'dataset3_id'),
+    ('project4_id', 'dataset4_id')
+]
+
+# Compare schemas and find differences
+compare_schemas(projects)
+
+
+
