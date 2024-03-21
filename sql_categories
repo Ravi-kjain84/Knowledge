@@ -81,3 +81,72 @@ for project_id, categories in comparison_results.items():
 
 result_df = pd.DataFrame(df_dict)
 print(result_df)
+
+
+------------------------------------------------------------------------------------------------------------
+
+from google.cloud import bigquery
+import pandas as pd
+
+# Function to fetch schema for a given project and dataset
+def fetch_schema(project_id, dataset_id):
+    client = bigquery.Client()
+    query = f"""
+        SELECT
+            table_name,
+            column_name,
+            data_type
+        FROM
+            `{project_id}.{dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+        ORDER BY
+            table_name,
+            ordinal_position
+    """
+    query_job = client.query(query)
+    schema_results = query_job.result()
+    schema_df = pd.DataFrame(schema_results)
+
+    # Categorize tables
+    table_names = set(schema_df['table_name'])
+    categories = categorize_tables(table_names)
+
+    # Add categories as a separate column
+    schema_df['Category'] = schema_df['table_name'].apply(lambda table_name: get_table_category(table_name, categories))
+    
+    return schema_df
+
+# Function to categorize tables based on naming patterns
+def categorize_tables(table_names):
+    categories = {
+        'Source': set(),
+        'Reference Data': set(),
+        'Report': set(),
+        'Intermediary': set()
+    }
+
+    for table_name in table_names:
+        if table_name.lower().endswith('_source'):
+            categories['Source'].add(table_name)
+        elif '_rd_' in table_name.lower():
+            categories['Reference Data'].add(table_name)
+        elif table_name.lower().endswith('_report'):
+            categories['Report'].add(table_name)
+        else:
+            categories['Intermediary'].add(table_name)
+
+    return categories
+
+# Function to get the category of a table
+def get_table_category(table_name, categories):
+    for category, tables in categories.items():
+        if table_name in tables:
+            return category
+    return 'Uncategorized'
+
+# Example usage
+project_id = 'your_project_id'
+dataset_id = 'your_dataset_id'
+
+schema_df = fetch_schema(project_id, dataset_id)
+print("Schema with Categories:")
+print(schema_df.head())
