@@ -205,3 +205,67 @@ print(schema_df.head())
     project1_tables = set(result_df[result_df['Project'] == project_datasets[0][0]]['table_name'])
     result_df = result_df[~((result_df['Project'] == project_datasets[1][0]) & (result_df['table_name'].isin(project1_tables)))]
 
+-----------------------------------------------
+
+from google.cloud import bigquery
+import pandas as pd
+
+# Function to fetch schema for a given project and dataset
+def fetch_schema(project_datasets):
+    client = bigquery.Client()
+    all_dataframes = []
+
+    # Fetch schema for project 1
+    project1_id, dataset1_id = project_datasets[0]
+    project1_schema = fetch_project_schema(client, project1_id, dataset1_id)
+    all_dataframes.append(project1_schema)
+
+    for project_id, dataset_id in project_datasets[1:]:
+        # Fetch schema for the project
+        schema_df = fetch_project_schema(client, project_id, dataset_id)
+        all_dataframes.append(schema_df)
+
+    # Concatenate all dataframes
+    result_df = pd.concat(all_dataframes, ignore_index=True)
+
+    # Remove duplicates based on project 1 schema
+    project1_tables = set(project1_schema['table_name'])
+    result_df = result_df[~result_df['table_name'].isin(project1_tables)]
+
+    return result_df
+
+# Function to fetch schema for a project and dataset
+def fetch_project_schema(client, project_id, dataset_id):
+    query = f"""
+        SELECT
+            table_name,
+            column_name,
+            data_type
+        FROM
+            `{project_id}.{dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+        ORDER BY
+            table_name,
+            ordinal_position
+    """
+    query_job = client.query(query)
+    schema_results = query_job.result()
+    schema_df = pd.DataFrame(schema_results)
+
+    # Add project and dataset columns
+    schema_df['Project'] = project_id
+    schema_df['Dataset'] = dataset_id
+
+    return schema_df
+
+# Example usage
+project_datasets = [
+    ('project1_id', 'dataset1_id'),
+    ('project2_id', 'dataset2_id'),
+    ('project3_id', 'dataset3_id')
+]
+
+schema_df = fetch_schema(project_datasets)
+print("Combined Schema:")
+print(schema_df.head())
+
+
