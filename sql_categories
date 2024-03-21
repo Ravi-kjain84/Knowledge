@@ -268,4 +268,20 @@ schema_df = fetch_schema(project_datasets)
 print("Combined Schema:")
 print(schema_df.head())
 
+----------------------------------
 
+Yes, intermediary table details can be obtained via the Information_Schema table, a standard method for accessing database information in Google Cloud
+
+To identify intermediary tables, we can:
+
+Utilize Information_Schema for all table and column names.
+Categorize tables as Source, Reference, or Output based on their names (Source tables end with _Source, Reference tables include RD, Output tables contain Output or Extract).
+Exclude tables linked to the rules_engine.
+Consider the rest as intermediary, potentially requiring further refinement.
+
+
+The steps should be applied collectively to all environments—the common (radar52), RWA (rwapc-51), and liquidity (fotc51-prod) environments—and separately for the UK and other regions to account for SDI version variations.
+
+Here's the sample table for gathering information through the previously mentioned method:
+
+I have already developed the methodology for obtaining these details but plan to further analyze before sharing any data. If you have suggestions on the approach, please let me know. I'll finalize the information on intermediary tables and share it by Monday.
