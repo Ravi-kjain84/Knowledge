@@ -198,3 +198,10 @@ project_datasets = [
 schema_df = fetch_schema(project_datasets)
 print("Combined Schema:")
 print(schema_df.head())
+
+------------------------------------------------
+
+ # Filter out tables from project 2 that already exist in project 1
+    project1_tables = set(result_df[result_df['Project'] == project_datasets[0][0]]['table_name'])
+    result_df = result_df[~((result_df['Project'] == project_datasets[1][0]) & (result_df['table_name'].isin(project1_tables)))]
+
