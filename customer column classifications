@@ -74,3 +74,93 @@ for name, df in dataframes.items():
 metadata_df = pd.DataFrame(metadata)
 
 print(metadata_df)
+---------------------------------------------------
+
+import pandas as pd
+
+def categorize_column(name):
+    """
+    Categorize column based on its name using predefined keywords.
+    """
+    # Define keywords for each category
+    identifier_keywords = ['id']
+    customer_related_keywords = ['customer', 'client', 'user']
+    currency_related_keywords = ['currency', 'ccy']
+    
+    # Convert name to lowercase for case-insensitive comparison
+    name_lower = name.lower()
+    
+    # Check each category
+    if any(keyword in name_lower for keyword in identifier_keywords):
+        return 'Identifier'
+    elif any(keyword in name_lower for keyword in customer_related_keywords):
+        return 'Customer Related'
+    elif any(keyword in name_lower for keyword in currency_related_keywords):
+        return 'Currency Related'
+    else:
+        return 'Other'
+
+# Example DataFrames as before
+df1 = pd.DataFrame({'customer_id': [1, 2, None], 'account_balance': [None, 200, 300]})
+df2 = pd.DataFrame({'user_name': [4, 5, 6], 'currency_value': [None, None, 9], 'ccy_code': [10, 11, 12]})
+
+dataframes = {'df1': df1, 'df2': df2}
+metadata = []
+
+for name, df in dataframes.items():
+    for col in df.columns:
+        total_rows = len(df)
+        null_values = df[col].isnull().sum()
+        null_percentage = (null_values / total_rows) * 100
+        category = categorize_column(col)
+        
+        metadata.append({
+            'DataFrame': name,
+            'Column': col,
+            'DataType': df[col].dtype,
+            'TotalRows': total_rows,
+            'NullValues': null_values,
+            'NullPercentage': null_percentage,
+            'Category': category
+        })
+
+metadata_df = pd.DataFrame(metadata)
+
+print(metadata_df)
+
+___________________________________________________
+
+import pandas as pd
+import spacy
+
+# Load the spaCy English language model
+nlp = spacy.load("en_core_web_sm")
+
+# Define a function to check if a column name is related to customer details
+def is_customer_related(column_name):
+    # List of customer related words to compare with
+    customer_related_words = ['customer', 'client', 'account']
+    customer_nlp = [nlp(word) for word in customer_related_words]
+    
+    # Process the column name with spaCy
+    column_nlp = nlp(column_name.replace('_', ' '))
+    
+    # Check for semantic similarity
+    for token in column_nlp:
+        for customer_token in customer_nlp:
+            if token.similarity(customer_token) > 0.5:  # Threshold for similarity
+                return True
+    return False
+
+# Example DataFrame
+df = pd.DataFrame({
+    'customer_id': [1, 2, 3],
+    'account_balance': [100, 200, 300],
+    'transaction_date': ['2021-01-01', '2021-01-02', '2021-01-03']
+})
+
+# Identify customer related columns
+customer_related_columns = [col for col in df.columns if is_customer_related(col)]
+
+print("Customer related columns:", customer_related_columns)
+
