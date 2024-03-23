@@ -217,4 +217,33 @@ metadata_df = pd.DataFrame(metadata)
 
 # Display the metadata DataFrame
 print(metadata_df)
+-----------------------------------------------------------------
+
+customer_related_words = [
+    "customer", "client", "account", "user", "cardholder", "holder", "owner",
+    "subscriber", "member", "clientele", "consumer", "patron", "depositor",
+    "borrower", "lender", "creditor", "debtor", "saver", "investor",
+    "beneficiary", "name", "surname", "lastname", "firstname", "address",
+    "email", "phone", "contact", "mobile", "zipcode", "postal", "city",
+    "state", "country", "nationality", "dob", "birthdate", "gender",
+    "marital", "occupation", "employment", "employer", "income", "salary",
+    "transaction", "balance", "deposit", "withdrawal", "transfer", "payment",
+    "statement", "loan", "mortgage", "credit", "debit", "asset", "liability",
+    "portfolio", "risk", "rating", "score", "product", "service", "offer",
+    "promotion", "campaign", "feedback", "complaint", "inquiry", "interaction",
+    "relationship", "tenure", "history", "activity", "behavior", "preference",
+    "interest", "security", "question", "answer", "authentication",
+    "verification", "identity", "profile", "risk_weighted", "assets",
+    "liquidity", "capital_requirement", "exposure", "default", "loss",
+    "provision", "impairment", "collateral", "derivative", "hedge",
+    "valuation", "fair_value", "amortized_cost", "financial_instrument",
+    "lease", "rental", "revenue", "expense", "IFRS", "GSIB", "FINREP",
+    "regulatory", "compliance", "audit", "reporting", "benchmark", 
+    "stress_test", "scenario_analysis", "solvency", "capital_adequacy",
+    "leverage_ratio", "liquidity_coverage", "net_stable_funding", "risk_management",
+    "due_diligence", "KYC", "AML", "anti_money_laundering", "know_your_customer",
+    "sanction", "watchlist", "PEP", "politically_exposed_person", "fraud_detection",
+    "credit_risk", "market_risk", "operational_risk", "liquidity_risk", 
+    "systemic_risk", "reputational_risk", "strategic_risk", "compliance_risk"
+]
 
