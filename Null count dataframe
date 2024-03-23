@@ -1,0 +1,35 @@
+import pandas as pd
+
+# Example DataFrames
+df1 = pd.DataFrame({'A': [1, 2, None], 'B': [None, 2, 3]})
+df2 = pd.DataFrame({'X': [4, 5, 6], 'Y': [None, None, 9], 'Z': [10, 11, 12]})
+
+# Store your DataFrames in a dictionary for easy iteration
+# The keys will be used as the names of the DataFrames
+dataframes = {'df1': df1, 'df2': df2}
+
+# Initialize an empty list to store each row of metadata
+metadata = []
+
+# Iterate through each DataFrame to collect its metadata
+for name, df in dataframes.items():
+    for col in df.columns:
+        # Calculate the number of nulls and null percentage for each column
+        total_rows = len(df)
+        null_values = df[col].isnull().sum()
+        null_percentage = (null_values / total_rows) * 100
+        
+        # Append the metadata for this column to the list
+        metadata.append({
+            'DataFrame': name,
+            'Column': col,
+            'DataType': df[col].dtype,
+            'TotalRows': total_rows,
+            'NullValues': null_values,
+            'NullPercentage': null_percentage
+        })
+
+# Convert the list of metadata into a DataFrame
+metadata_df = pd.DataFrame(metadata)
+
+print(metadata_df)
