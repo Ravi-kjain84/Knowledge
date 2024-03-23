@@ -1,0 +1,76 @@
+import pandas as pd
+import nltk
+from nltk.corpus import wordnet as wn
+
+# Ensure you have the necessary NLTK data
+nltk.download('wordnet')
+
+def categorize_column(name):
+    """
+    Categorize column based on its name.
+    """
+    # Define simple keyword-based categories
+    if 'id' in name.lower():
+        return 'Identifier'
+    elif 'customer' in name.lower():
+        return 'Customer Related'
+    elif 'currency' in name.lower() or 'ccy' in name.lower():
+        return 'Currency Related'
+    else:
+        return 'Other'
+
+def is_customer_related(name):
+    """
+    Determine if a column name is semantically related to 'customer' using NLP.
+    """
+    # Get synsets for the column name and 'customer'
+    customer_synsets = wn.synsets('customer')
+    column_synsets = wn.synsets(name)
+    
+    # Check for semantic relation
+    for col_syn in column_synsets:
+        for cust_syn in customer_synsets:
+            if col_syn.wup_similarity(cust_syn) > 0.5:  # Adjust threshold as needed
+                return True
+    return False
+
+# Example DataFrames
+df1 = pd.DataFrame({'customer_id': [1, 2, None], 'account_balance': [None, 200, 300]})
+df2 = pd.DataFrame({'user_name': [4, 5, 6], 'currency_value': [None, None, 9], 'ccy_code': [10, 11, 12]})
+
+# Store your DataFrames in a dictionary for easy iteration
+dataframes = {'df1': df1, 'df2': df2}
+
+# Initialize an empty list to store each row of metadata
+metadata = []
+
+# Iterate through each DataFrame to collect its metadata
+for name, df in dataframes.items():
+    for col in df.columns:
+        # Calculate the number of nulls and null percentage for each column
+        total_rows = len(df)
+        null_values = df[col].isnull().sum()
+        null_percentage = (null_values / total_rows) * 100
+        
+        # Determine the category of the column
+        category = categorize_column(col)
+        
+        # Check if the column is customer-related using NLP
+        customer_related = 'Yes' if is_customer_related(col) else 'No'
+        
+        # Append the metadata for this column to the list
+        metadata.append({
+            'DataFrame': name,
+            'Column': col,
+            'DataType': df[col].dtype,
+            'TotalRows': total_rows,
+            'NullValues': null_values,
+            'NullPercentage': null_percentage,
+            'Category': category,
+            'IsCustomerRelated': customer_related
+        })
+
+# Convert the list of metadata into a DataFrame
+metadata_df = pd.DataFrame(metadata)
+
+print(metadata_df)
