@@ -163,4 +163,58 @@ df = pd.DataFrame({
 customer_related_columns = [col for col in df.columns if is_customer_related(col)]
 
 print("Customer related columns:", customer_related_columns)
+--------------------------------------------
+
+import pandas as pd
+import spacy
+
+# Load the spaCy English language model
+nlp = spacy.load("en_core_web_sm")
+
+# Define a function to check if a column name is related to customer details
+def is_customer_related(column_name):
+    # List of customer related words to compare with
+    customer_related_words = ['customer', 'client', 'account']
+    customer_nlp = [nlp(word) for word in customer_related_words]
+    
+    # Process the column name with spaCy
+    column_nlp = nlp(column_name.replace('_', ' '))
+    
+    # Check for semantic similarity
+    for token in column_nlp:
+        for customer_token in customer_nlp:
+            if token.similarity(customer_token) > 0.5:  # Threshold for similarity
+                return True
+    return False
+
+# Your DataFrame (example)
+df = pd.DataFrame({
+    'customer_id': [1, 2, 3],
+    'account_balance': [100, 200, 300],
+    'transaction_date': ['2021-01-01', '2021-01-02', '2021-01-03'],
+    'user_email': ['email1@example.com', 'email2@example.com', 'email3@example.com']
+})
+
+# Initialize an empty list to store each column's metadata
+metadata = []
+
+# Iterate through each column in the DataFrame
+for col in df.columns:
+    # Preprocess the column name by replacing underscores with spaces
+    processed_col_name = col.replace('_', ' ')
+    
+    # Determine if the column is customer-related
+    customer_related = is_customer_related(col)
+    
+    # Append the metadata for this column to the list
+    metadata.append({
+        'Column': col,
+        'IsCustomerRelated': customer_related
+    })
+
+# Convert the list of metadata into a DataFrame
+metadata_df = pd.DataFrame(metadata)
+
+# Display the metadata DataFrame
+print(metadata_df)
 
