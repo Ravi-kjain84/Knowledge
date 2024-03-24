@@ -246,4 +246,30 @@ customer_related_words = [
     "credit_risk", "market_risk", "operational_risk", "liquidity_risk", 
     "systemic_risk", "reputational_risk", "strategic_risk", "compliance_risk"
 ]
+------------------------------------------
+
+import pandas as pd
+
+# Example DataFrames
+# You would replace these with your actual DataFrames
+dataframes_list = [
+    pd.DataFrame(columns=['first_name', 'last_column']),
+    pd.DataFrame(columns=['second_test', 'another_column']),
+]
+
+# Step 1: Merge column names into a single list
+all_column_names = [name for df in dataframes_list for name in df.columns]
+
+# Step 2: Replace underscores and split the names into individual words
+words = " ".join(all_column_names).replace('_', ' ').split()
+
+# Step 3: Find unique words
+unique_words = set(words)
+
+# Step 4: Remove prepositions or proposition-related words
+# Note: You might need to expand this list based on your requirements
+prepositions = {'of', 'in', 'to', 'for', 'with', 'on', 'at', 'from', 'by', 'about', 'as', 'into', 'like', 'through', 'after', 'over', 'between', 'out', 'against', 'during', 'without', 'before', 'under', 'around', 'among'}
+filtered_words = unique_words - prepositions
+
+print(filtered_words)
 
