@@ -272,4 +272,30 @@ prepositions = {'of', 'in', 'to', 'for', 'with', 'on', 'at', 'from', 'by', 'abou
 filtered_words = unique_words - prepositions
 
 print(filtered_words)
+----------------------
+
+import pandas as pd
+
+def identify_unique_words_from_column(df):
+    # List of common English prepositions to exclude
+    prepositions = {"above", "across", "against", "along", "among", "around", "at", "before", "behind", "below",
+                    "beneath", "beside", "between", "by", "down", "during", "for", "from", "in", "into", "near",
+                    "of", "off", "on", "to", "under", "up", "with", "without"}
+    
+    # Extracting words from the 'column_names' column, excluding prepositions
+    words = [word for col_name in df['column_names'] for word in col_name.split('_') if word not in prepositions]
+    
+    # Counting occurrences of each word
+    word_counts = pd.Series(words).value_counts().reset_index()
+    
+    # Renaming columns to 'Word' and 'Count'
+    word_counts.columns = ['Word', 'Count']
+    
+    return word_counts
+
+# Example usage:
+# Assuming your DataFrame 'df' has a column 'column_names' containing the names
+# df = pd.DataFrame({'column_names': ['column_name1', 'column_name2', ...]})
+# result_df = identify_unique_words_from_column(df)
+# print(result_df)
 
