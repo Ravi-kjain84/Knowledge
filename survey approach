@@ -69,3 +69,35 @@ else:
 
 # Save the updated presentation
 prs.save('updated_presentation.pptx')
+
+****************
+
+from pptx import Presentation
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE
+from pptx.util import Inches
+
+# Load the presentation
+prs = Presentation('template.pptx')  # Ensure you have a template file
+slide = prs.slides[0]  # Access the first slide
+
+# Assuming the placeholder is intended for a chart
+placeholder = slide.placeholders[0]  # Get the first placeholder
+
+# Check if the placeholder contains a graphic frame with a chart
+if placeholder.shape_type == MSO_SHAPE_TYPE.GRAPHIC_FRAME and hasattr(placeholder, 'chart'):
+    chart = placeholder.chart  # Access the chart
+
+    # Create new chart data
+    chart_data = CategoryChartData()
+    chart_data.categories = ['Q1', 'Q2', 'Q3', 'Q4']
+    chart_data.add_series('Example Series', (24, 40, 70, 50))
+
+    # Update the chart data
+    chart.replace_data(chart_data)
+else:
+    print("The selected placeholder does not contain a chart or is not a chart placeholder.")
+
+# Save the presentation
+prs.save('updated_presentation.pptx')
+
