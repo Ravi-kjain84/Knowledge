@@ -101,3 +101,38 @@ else:
 # Save the presentation
 prs.save('updated_presentation.pptx')
 
+
+**********************
+
+import pandas as pd
+
+# Sample data
+data = {
+    'Category': ['A', 'B', 'C', 'D', 'E'],
+    'Value1': [10, 20, 15, 30, 25],
+    'Value2': [5, 12, 8, 18, 14]
+}
+
+# Create the DataFrame
+my_chart_data = pd.DataFrame(data)
+
+# Display the DataFrame
+print(my_chart_data)
+
+from pptx import Presentation
+
+# Load the presentation
+prs = Presentation('having-chart-placeholder.pptx')
+
+# Get the second slide layout (assuming the chart placeholder is on this layout)
+slide_layout = prs.slide_layouts[1]
+
+# Get the chart placeholder shape
+chart_placeholder = slide_layout.placeholders[10]
+
+# Insert a chart into the placeholder (you'll need to create your chart data first)
+chart = chart_placeholder.insert_chart(chart_type='bar', data=my_chart_data)
+
+# Save the modified presentation
+prs.save('modified-presentation.pptx')
+
