@@ -1,1 +1,28 @@
+from pptx import Presentation
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE
+from pptx.util import Inches
+
+# Sample data for the bar chart
+categories = ['Apples', 'Oranges', 'Pears', 'Bananas']
+values = [50, 30, 40, 60]
+
+# Load the PowerPoint file (make sure it has at least one slide with a chart)
+ppt_file = 'template.pptx'  # Update this to your PowerPoint template path
+prs = Presentation(ppt_file)
+
+# Assuming the template has at least one slide with a chart
+slide = prs.slides[0]  # Get the first slide with the chart
+chart = slide.shapes[0].chart  # Get the first chart on the slide
+
+# Update the chart data
+data = CategoryChartData()
+data.categories = categories
+data.add_series('Fruit Sales', values)
+
+# Assign new data to the chart
+chart.replace_data(data)
+
+# Save the updated presentation
+prs.save('updated_presentation.pptx')
 
