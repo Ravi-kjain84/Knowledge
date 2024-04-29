@@ -1,0 +1,85 @@
+Here are some suggested markdown cells you can add to your Jupyter notebook to clearly explain each step and the overall purpose of your Python code:
+
+---
+
+### Introduction
+This notebook is designed to automate the process of buying for Kate's fusion account related to hub transactions. The process leverages affiliate code instructions provided in a fusion file to guide the transactions.
+
+### Objective
+The main objective of this script is to identify and process transactions for Kate's fusion account based on specific codes and account information contained within various financial reports and transaction files.
+
+### Data Sources
+The following data sources are used in this notebook:
+- Hub report: Contains details on nominals, cost centres, and currency codes involved in the transactions.
+- Opening balance file: Provides the opening balance along with the affiliate code from the previous period.
+- Fusion transaction file: Includes transaction details necessary for identifying the Saracen code through affiliate code mapping.
+
+### Step 1: Setup and Data Import
+Import necessary Python libraries and load the data from the following Excel files:
+- **Hub report:** This file provides the necessary details to identify the transactions specific to the account's needs.
+- **Opening balance file:** Used to fetch the opening balances with corresponding affiliate codes.
+- **Fusion transaction file:** Essential for mapping affiliate codes to Saracen codes.
+
+```python
+# Python code to load data
+import pandas as pd
+hub_report = pd.read_excel('hub_report.xlsx')
+opening_balance = pd.read_excel('opening_balance.xlsx')
+fusion_transaction_file = pd.read_excel('fusion_transaction_file.xlsx')
+```
+
+### Analysis Steps
+The following steps outline the analysis process:
+1. **Identify Transaction Details:** Extract necessary transaction details from the hub report.
+2. **Map Affiliate Codes:** Use the fusion transaction file to map affiliate codes to corresponding Saracen codes based on predefined rules.
+3. **Calculate Adjustments:** Based on the opening balances and the transactions identified, calculate any necessary adjustments to the accounts.
+
+---
+
+You can insert these markdown cells before the corresponding code cells in your Jupyter notebook to provide context and explanations for each part of the process. This not only makes the notebook more user-friendly but also serves as documentation for anyone who may use or refer to this notebook in the future.
+
+
+
+You can continue your Jupyter notebook with additional markdown cells to describe the expanded steps and functionalities in the Python code. Here's how you might organize and explain these additional details:
+
+---
+
+### Step 2: Import Libraries
+Import the necessary Python libraries that will be used throughout the notebook. This includes `pandas` for data manipulation and `re` for regular expression operations, which are essential for processing string data.
+
+```python
+import pandas as pd
+import re
+```
+
+### Step 3: Load Additional Data Files
+Read additional Excel files required for the complete analysis. These files include detailed transaction data, currency codes, and historical exchange rates which are crucial for accurate financial processing.
+
+```python
+hub_query_output = pd.read_excel('hub_query_output.xlsx')
+nominal_list = pd.read_excel('nominal_list.xlsx')
+currency_code_mapping = pd.read_excel('currency_code_mapping.xlsx')
+hub_entries = pd.read_excel('hub_entries.xlsx')
+hub_opening_balance = pd.read_excel('hub_opening_balance.xlsx')
+fusion_transactions = pd.read_excel('fusion_transactions.xlsx')
+exchange_rate_TOR = pd.read_excel('exchange_rate_TOR.xlsx')
+```
+
+### Step 4: Account Detail Configuration
+Create account details by combining the account branch, serial, and suffix details. Standardize these details to a 3-6-3 format by padding zeros where necessary. This step ensures that all account identifiers meet the required format for processing.
+
+### Step 5: Calculate Exchange Rates and Cost Centre List
+Determine the appropriate exchange rate for each transaction based on its currency. Additionally, compile a list of cost centres involved in the transactions. This is essential for accurate financial reporting and analysis.
+
+### Step 6: Mapping and Narrative Combination
+Map each transaction to a Saracen ID based on its affiliate value. Also, combine narrations from four different columns into a single column to streamline transaction descriptions. This step is crucial for clarity and ease of transaction identification.
+
+### Step 7: Data Filtering
+Filter the fusion transaction data based on the functional currency, cost centre list, and nominal list. This selective filtering helps focus the analysis on relevant transaction data, reducing complexity and improving processing speed.
+
+### Step 8: Aggregation and Balance Calculation
+Group the data by Saracen ID to summarize functional amounts. Then, merge these amounts with the opening balances to compute the closing balances for each account. This final step provides the net effect of all transactions on the accounts' balances.
+
+---
+
+These markdown sections will make your notebook more structured and easier to follow, helping users understand each step of the financial processing carried out in your Python code.
