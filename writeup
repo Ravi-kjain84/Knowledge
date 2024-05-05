@@ -1,0 +1,38 @@
+import pandas as pd
+
+# Sample data for the DataFrame
+data = {
+    'Categories': ['A', 'B', 'C', 'D'],
+    'Values': [10, 20, 30, 40]
+}
+
+df = pd.DataFrame(data)
+
+# Create a Pandas Excel writer using XlsxWriter as the engine
+with pd.ExcelWriter('data_with_chart.xlsx', engine='xlsxwriter') as writer:
+    # Write your DataFrame to an Excel file on Sheet1
+    df.to_excel(writer, sheet_name='Sheet1', index=False)
+
+    # Access the XlsxWriter workbook and worksheet objects from the dataframe
+    workbook = writer.book
+    worksheet = writer.sheets['Sheet1']
+    
+    # Create a bar chart object
+    chart = workbook.add_chart({'type': 'bar'})
+
+    # Configure the series of the chart from the DataFrame data. 
+    # Here we need to adjust the cell range based on the DataFrame's size
+    chart.add_series({
+        'categories': '=Sheet1!$A$2:$A$5',
+        'values':     '=Sheet1!$B$2:$B$5',
+    })
+
+    # Optionally, add chart title, axis titles, etc.
+    chart.set_title({'name': 'Values by Category'})
+    chart.set_x_axis({'name': 'Category'})
+    chart.set_y_axis({'name': 'Value'})
+
+    # Insert the chart into the worksheet with an offset
+    worksheet.insert_chart('D2', chart)
+
+# Note: The Excel file 'data_with_chart.xlsx' is saved in your current directory.
