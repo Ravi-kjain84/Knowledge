@@ -1,0 +1,53 @@
+To craft a comprehensive report regarding the issues with affiliate code non-population in the hub system, and the proposed solutions, you will need to structure it into several key sections including an introduction, problem statement, analysis of the issues, proposed solutions, and the roles of various teams. Below is a structured outline and a draft of how the report might look:
+
+Report on Affiliate Code Issues in Hub System
+
+Introduction
+
+	•	Briefly introduce the purpose of the report and the main focus: addressing the non-population of affiliate codes in the hub system and its impact on financial reporting.
+
+Problem Statement
+
+	•	Detail the challenges faced by the Financial Accounting team due to missing affiliate codes in the hub system. Highlight how these challenges occur during critical and peak times, increasing the risk of delayed financial reporting and potential errors.
+
+Analysis of Issues
+
+	•	Reason 1: Lack of product details in transactions leading to no affiliate codes being populated.
+	•	Reason 2: In transactions related to treats, the hub system fails to populate affiliate codes, necessitating reliance on the Remind system for retrieval.
+	•	Reason 3: Presence of multiple affiliate codes for the same account details results in the hub system sending blank affiliate codes.
+	•	Reason 4: Manual adjustments posted by users without mentioning affiliate codes due to negligence or unavailability of information.
+	•	Reason 5: For transactions involving multiple affiliate codes for the same account details and submitted through the Infusion system, the affiliate code appears blank.
+
+Proposed Solutions
+
+	•	Solution 1: Enable the Financial Accounting team to provide affiliate code details to the Hub IT team for one-time maintenance, with necessary approvals from the financial controller.
+	•	Solution 2: Conduct further reviews by the Hub Centre of Excellence team on transactions where the affiliate code comes up blank from certain systems.
+	•	Solution 3: Implement design changes in the hub system to ensure the automatic population of affiliate codes.
+
+Benefits
+
+	•	Outlines the benefits of addressing the issue, such as more streamlined processes, reduced manual effort, faster and more accurate financial reporting, and decreased error rates.
+
+Support Required
+
+	•	Discuss the support needed from the Hub Centre of Excellence, regional offices, financial controllers, the Financial Accounting team, and sponsors to implement the proposed solutions.
+
+Conclusion
+
+	•	Summarize the importance of resolving the affiliate code issues and the expected improvements in operational efficiency and reporting accuracy.
+
+Appendices and Supporting Documents
+
+	•	Include technical details, data analysis, feedback from stakeholders, and any preliminary results from trial solutions.
+
+Steps to Draft the Report:
+
+	1.	Gather Data: Collect all relevant data, feedback, and prior reports on the hub system issues.
+	2.	Interview Stakeholders: Engage with members from the Financial Accounting team, Hub Centre of Excellence team, and IT team to get detailed insights and verify the reasons and current operational challenges.
+	3.	Draft Solutions: Based on the collected information, draft plausible solutions and discuss these with technical teams for feasibility.
+	4.	Financial and Resource Analysis: Evaluate the resource and financial implications of the proposed solutions.
+	5.	Draft the Report: Using the outlined structure, draft the report. Focus on clarity, making sure to explain technical details for non-technical stakeholders.
+	6.	Review and Revise: Have the draft reviewed by key team members and revise based on feedback.
+	7.	Finalize and Distribute: Finalize the report and distribute it among the stakeholders, ensuring all involved parties have access to the information and understand their roles in the solutions proposed.
+
+This structured approach will help ensure that the report is comprehensive, clear, and actionable, providing a path forward to address the affiliate code issues effectively.
