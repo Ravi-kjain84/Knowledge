@@ -4,28 +4,44 @@ from pyxlsb import open_workbook
 # Define the path to your XLSB file
 path_to_file = 'path_to_your_file.xlsb'
 
-# This will hold your data with sheet names as keys
+# Sheet names you want to read and custom names for the DataFrames
+sheet_names = ["Sheet1", "Sheet2"]
+custom_names = {
+    "Sheet1": "custom_name1",
+    "Sheet2": "custom_name2"
+}
+
+# Dictionary to store DataFrames with custom names as keys
 data_frames = {}
 
 # Open the XLSB file
 with open_workbook(path_to_file) as wb:
-    # Iterate through each sheet in the workbook
-    for sheet_name in wb.sheets:
-        # Using the sheet name to open the sheet
-        with wb.get_sheet(sheet_name) as sheet:
-            # Convert rows to a DataFrame
-            df = pd.DataFrame(sheet.rows())
-            
-            # If the first row contains headers, set it as DataFrame header
-            if not df.empty:
-                df.columns = df.iloc[0]  # Set the first row as the column names
-                df = df[1:]              # Remove the first row from the data
+    for sheet_name in sheet_names:
+        if sheet_name in wb.sheets:
+            with wb.get_sheet(sheet_name) as sheet:
+                # Extracting only the values from each row
+                data = []
+                for row in sheet.rows():
+                    data.append([cell.v for cell in row])  # List comprehension to extract cell values
 
-            # Store the DataFrame in a dictionary using the sheet name as the key
-            data_frames[sheet_name] = df
+                # Create DataFrame from the list of value rows
+                df = pd.DataFrame(data)
+                
+                # Apply headers and clean up the DataFrame
+                if not df.empty:
+                    df.columns = df.iloc[0]  # Set the first row as the column names
+                    df = df[1:]              # Remove the first row from the data
+                    df.reset_index(drop=True, inplace=True)  # Reset index for a clean DataFrame
 
-# Now, you can access each sheet's DataFrame from the dictionary by its sheet name
-# Example to print all data frames:
-for name, frame in data_frames.items():
-    print(f"Data from sheet: {name}")
-    print(frame)
+                # Store DataFrame using the custom name
+                data_frames[custom_names[sheet_name]] = df
+
+# Accessing data from the dictionary and using custom names
+custom_name1 = data_frames["custom_name1"]
+custom_name2 = data_frames["custom_name2"]
+
+print("\nPreview of DataFrame custom_name1:")
+print(custom_name1.head())
+
+print("\nPreview of DataFrame custom_name2:")
+print(custom_name2.head())
