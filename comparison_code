@@ -1,52 +1,31 @@
-def add_comparison_columns(df, comparison_columns):
-    # Add comparison columns to the DataFrame
-    for i, cols in enumerate(comparison_columns):
-        col1, col2 = cols
-        df[f'Comparison_{i}'] = df[col1] == df[col2]
-    return df
+import pandas as pd
+from pyxlsb import open_workbook
 
-# Example DataFrame and comparison setup
-data = {'Column1': [1, 2, 3], 'Column2': [1, 2, 3], 'Column3': [1, 5, 3], 'Column4': [2, 2, 3]}
-df = pd.DataFrame(data)
-comparison_columns = [('Column1', 'Column2'), ('Column2', 'Column3'), ('Column3', 'Column4')]
+# Define the path to your XLSB file
+path_to_file = 'path_to_your_file.xlsb'
 
-# Add comparison results to DataFrame
-df = add_comparison_columns(df, comparison_columns)
+# This will hold your data with sheet names as keys
+data_frames = {}
 
+# Open the XLSB file
+with open_workbook(path_to_file) as wb:
+    # Iterate through each sheet in the workbook
+    for sheet_name in wb.sheets:
+        # Using the sheet name to open the sheet
+        with wb.get_sheet(sheet_name) as sheet:
+            # Convert rows to a DataFrame
+            df = pd.DataFrame(sheet.rows())
+            
+            # If the first row contains headers, set it as DataFrame header
+            if not df.empty:
+                df.columns = df.iloc[0]  # Set the first row as the column names
+                df = df[1:]              # Remove the first row from the data
 
-def export_to_excel_with_formatting(df, output_file):
-    with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name='Sheet1', index=False)
-        workbook = writer.book
-        worksheet = writer.sheets['Sheet1']
-        
-        # Define Excel formats for true (green) and false (red)
-        format_true = workbook.add_format({'bg_color': 'green', 'font_color': 'white'})
-        format_false = workbook.add_format({'bg_color': 'red', 'font_color': 'white'})
+            # Store the DataFrame in a dictionary using the sheet name as the key
+            data_frames[sheet_name] = df
 
-        # Get number of rows and columns
-        max_row = len(df)
-        max_col = len(df.columns)
-        
-        # Apply conditional formatting to each comparison column
-        for i in range(len(comparison_columns)):
-            comparison_col_index = max_col - len(comparison_columns) + i
-            worksheet.conditional_format(1, comparison_col_index, max_row, comparison_col_index, {
-                'type': 'cell',
-                'criteria': '==',
-                'value': True,
-                'format': format_true
-            })
-            worksheet.conditional_format(1, comparison_col_index, max_row, comparison_col_index, {
-                'type': 'cell',
-                'criteria': '==',
-                'value': False,
-                'format': format_false
-            })
-
-        # Set the column width to fit the content
-        for col_num in range(max_col):
-            worksheet.set_column(col_num, col_num, 20)  # Adjust 20 or use a method to auto-determine width based on content
-
-# Export the DataFrame with formatting to Excel
-export_to_excel_with_formatting(df, 'formatted_output.xlsx')
+# Now, you can access each sheet's DataFrame from the dictionary by its sheet name
+# Example to print all data frames:
+for name, frame in data_frames.items():
+    print(f"Data from sheet: {name}")
+    print(frame)
