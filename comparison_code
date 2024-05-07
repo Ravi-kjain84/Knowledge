@@ -1,4 +1,39 @@
 import pandas as pd
+import numpy as np
+
+# Sample DataFrame
+data = {
+    'col1': [1, 2, np.nan, 4],
+    'col2': [5.0, np.nan, 7.0, 8.0],
+    'col3': ['a', 'b', 'c', 'd'],
+    'col4': [np.nan, 10.0, 20.0, 30.0]
+}
+
+df = pd.DataFrame(data)
+
+# Columns to concatenate
+cols_to_concat = ['col1', 'col2', 'col3', 'col4']
+
+# Function to format each cell before concatenation
+def format_cell(cell):
+    if pd.isna(cell):
+        return ''
+    elif isinstance(cell, float) and cell.is_integer():
+        return str(int(cell))  # Convert floats that are integers to int, then to str
+    else:
+        return str(cell)
+
+# Apply formatting to each cell, then concatenate
+df['concatenated'] = df[cols_to_concat].applymap(format_cell).agg(''.join, axis=1)
+
+print(df)
+
+
+
+
+
+
+import pandas as pd
 from pyxlsb import open_workbook
 
 # Define the path to your XLSB file
