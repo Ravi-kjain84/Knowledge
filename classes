@@ -1,18 +1,24 @@
 import pandas as pd
 
 class DataProcessor:
-    def __init__(self, remind_file: str, hub_file: str, fusion_file: str):
+    def __init__(self, remind_file: str, remind_sheet: str, hub_file: str, hub_sheet: str, fusion_file: str, fusion_sheet: str):
         """
-        Initialize the DataProcessor with file paths for the required data files.
+        Initialize the DataProcessor with file paths and sheet names for the required data files.
         
         Args:
             remind_file (str): Path to the remind Excel file.
+            remind_sheet (str): Sheet name in the remind Excel file.
             hub_file (str): Path to the hub Excel file.
+            hub_sheet (str): Sheet name in the hub Excel file.
             fusion_file (str): Path to the fusion Excel file.
+            fusion_sheet (str): Sheet name in the fusion Excel file.
         """
         self.remind_file = remind_file
+        self.remind_sheet = remind_sheet
         self.hub_file = hub_file
+        self.hub_sheet = hub_sheet
         self.fusion_file = fusion_file
+        self.fusion_sheet = fusion_sheet
         self.remind_df = None
         self.hub_df = None
         self.fusion_df = None
@@ -20,9 +26,9 @@ class DataProcessor:
 
     def import_data(self):
         """Import data from Excel files."""
-        self.remind_df = pd.read_excel(self.remind_file)
-        self.hub_df = pd.read_excel(self.hub_file)
-        self.fusion_df = pd.read_excel(self.fusion_file)
+        self.remind_df = pd.read_excel(self.remind_file, sheet_name=self.remind_sheet)
+        self.hub_df = pd.read_excel(self.hub_file, sheet_name=self.hub_sheet)
+        self.fusion_df = pd.read_excel(self.fusion_file, sheet_name=self.fusion_sheet)
         print("Data imported successfully.")
 
     def clean_remind_data(self):
@@ -110,16 +116,27 @@ class DataProcessor:
             worksheet.set_column('A:Z', 18, format1)
         print("Control data populated into Excel with formatting.")
 
-# Example usage
+---
+
+from scripts.data_processor import DataProcessor
+
 if __name__ == "__main__":
-    processor = DataProcessor('remind.xlsx', 'hub.xlsx', 'fusion.xlsx')
+    processor = DataProcessor(
+        remind_file='data/remind.xlsx',
+        remind_sheet='RemindSheet',
+        hub_file='data/hub.xlsx',
+        hub_sheet='HubSheet',
+        fusion_file='data/fusion.xlsx',
+        fusion_sheet='FusionSheet'
+    )
     processor.import_data()
     processor.clean_remind_data()
     processor.clean_hub_data()
     processor.compare_and_populate_entity()
     cpa_details = processor.get_cpa_details()
-    processor.create_control_dashboard('control_dashboard.xlsx')
+    processor.create_control_dashboard('output/control_dashboard.xlsx')
     entity_details = processor.get_entity_details()
     processor.gather_final_upload_details()
-    processor.export_to_excel('final_upload.xlsx')
-    processor.populate_control_data('control_data.xlsx')
+    processor.export_to_excel('output/final_upload.xlsx')
+    processor.populate_control_data('output/control_data.xlsx')
+
