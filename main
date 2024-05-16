@@ -1,0 +1,23 @@
+from scripts.data_processor import DataProcessor
+
+if __name__ == "__main__":
+    processor = DataProcessor(
+        remind_file='data/remind.xlsx',
+        remind_sheet='RemindSheet',
+        hub_file='data/hub.xlsx',
+        hub_sheet='HubSheet',
+        fusion_file='data/fusion.xlsx',
+        fusion_sheet='FusionSheet',
+        mapping_file='data/mapping.xlsx',
+        mapping_sheets=['AccountList', 'CustomerList', 'EntityArea', 'EntityProduct', 'TransactionTypeMapping']
+    )
+    processor.import_data()
+    processor.clean_remind_data()
+    processor.clean_hub_data()
+    processor.compare_and_populate_entity()
+    cpa_details = processor.get_cpa_details()
+    processor.create_control_dashboard('output/control_dashboard.xlsx')
+    entity_details = processor.get_entity_details()
+    processor.gather_final_upload_details()
+    processor.export_to_excel('output/final_upload.xlsx')
+    processor.populate_control_data('output/control_data.xlsx')
