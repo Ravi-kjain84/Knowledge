@@ -115,11 +115,58 @@ class DataProcessor:
         print("Hub data cleaned and mapped.")
 
     def compare_and_populate_entity(self):
-        """Compare remind and hub data to populate entity column."""
-        # Example comparison logic
-        self.remind_df = self.remind_df.merge(self.hub_df[['TransactionID', 'Entity']], on='TransactionID', how='left')
-        self.remind_df['Entity'].fillna('Unknown', inplace=True)
-        print("Entity column populated in remind data.")
+        """Compare remind and hub data to populate entity column with detailed operations."""
+        # 1. Group by hub and remind based on counter product for the sum of the amount
+        hub_grouped = self.hub_df.groupby(['Account', 'Product'])['Amount'].sum().reset_index()
+        remind_grouped = self.remind_df.groupby(['Account', 'Product'])['Amount'].sum().reset_index()
+        
+        # 2. Merge remind with hub and calculate the difference of the amount
+        merged_df = remind_grouped.merge(hub_grouped, on=['Account', 'Product'], suffixes=('_remind', '_hub'), how='left')
+        merged_df['AmountDifference'] = merged_df['Amount_remind'] - merged_df['Amount_hub']
+        merged_df['AmountDifference'] = merged_df['AmountDifference'].round(0)
+        
+        # 3. Keep only those rows where the difference is equal to 0
+        matching_rows = merged_df[merged_df['AmountDifference'] == 0]
+        
+        # 4. Merge the data in the remind data frame with the rows identified in the above step
+        self.remind_df = self.remind_df.merge(
+            matching_rows[['Account', 'Product']], on=['Account', 'Product'], how='left', indicator=True
+        )
+        self.remind_df = self.remind_df[self.remind_df['_merge'] == 'both']
+        self.remind_df.drop(columns=['_merge'], inplace=True)
+        
+        # 5. Repeat the above steps for hub data frame
+        self.hub_df = self.hub_df.merge(
+            matching_rows[['Account', 'Product']], on=['Account', 'Product'], how='left', indicator=True
+        )
+        self.hub_df = self.hub_df[self.hub_df['_merge'] == 'both']
+        self.hub_df.drop(columns=['_merge'], inplace=True)
+        
+        # 6. Identify all those rows in the remind data which are not available in the hub data
+        remind_not_in_hub = self.remind_df.merge(
+            self.hub_df, on=['Account', 'Product'], how='left', indicator=True
+        )
+        remind_not_in_hub = remind_not_in_hub[remind_not_in_hub['_merge'] == 'left_only']
+        remind_not_in_hub['Amount'] = remind_not_in_hub['Amount'] * -1
+        remind_not_in_hub.drop(columns=['_merge'], inplace=True)
+        
+        # 7. Pick the hub adjustments where remind rows are not available
+        hub_not_in_remind = self.hub_df.merge(
+            self.remind_df, on=['Account', 'Product'], how='left', indicator=True
+        )
+        hub_not_in_remind = hub_not_in_remind[hub_not_in_remind['_merge'] == 'left_only']
+        hub_not_in_remind.drop(columns=['_merge'], inplace=True)
+        
+        # 8. Add a new column 'Source' and assign values based on the data frame
+        self.remind_df['Source'] = 'Remind'
+        hub_not_in_remind['Source'] = 'HUB_adj'
+        remind_not_in_hub['Source'] = 'Remind_adj'
+        
+        # 9. Combine all data frames to create the final upload data frame
+        self.final_upload_df = pd.concat([self.remind_df, hub_not_in_remind, remind_not_in_hub])
+        
+        print("Entity column populated and data compared between remind and hub data.")
+
 
     def get_cpa_details(self):
         """Get details of CPA."""
