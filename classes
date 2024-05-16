@@ -1,0 +1,125 @@
+import pandas as pd
+
+class DataProcessor:
+    def __init__(self, remind_file: str, hub_file: str, fusion_file: str):
+        """
+        Initialize the DataProcessor with file paths for the required data files.
+        
+        Args:
+            remind_file (str): Path to the remind Excel file.
+            hub_file (str): Path to the hub Excel file.
+            fusion_file (str): Path to the fusion Excel file.
+        """
+        self.remind_file = remind_file
+        self.hub_file = hub_file
+        self.fusion_file = fusion_file
+        self.remind_df = None
+        self.hub_df = None
+        self.fusion_df = None
+        self.final_upload_df = None
+
+    def import_data(self):
+        """Import data from Excel files."""
+        self.remind_df = pd.read_excel(self.remind_file)
+        self.hub_df = pd.read_excel(self.hub_file)
+        self.fusion_df = pd.read_excel(self.fusion_file)
+        print("Data imported successfully.")
+
+    def clean_remind_data(self):
+        """Clean and map remind data."""
+        # Example data cleaning and mapping logic
+        self.remind_df.dropna(subset=['TransactionID'], inplace=True)
+        self.remind_df['Amount'] = self.remind_df['Amount'].apply(lambda x: float(x.replace(',', '')))
+        self.remind_df['MappedColumn'] = self.remind_df['TransactionType'].map({
+            'TypeA': 'MappedType1',
+            'TypeB': 'MappedType2'
+        })
+        print("Remind data cleaned and mapped.")
+
+    def clean_hub_data(self):
+        """Clean and map hub data."""
+        # Example data cleaning and mapping logic
+        self.hub_df.dropna(subset=['TransactionID'], inplace=True)
+        self.hub_df['Amount'] = self.hub_df['Amount'].apply(lambda x: float(x.replace(',', '')))
+        self.hub_df['MappedColumn'] = self.hub_df['TransactionType'].map({
+            'TypeA': 'MappedType1',
+            'TypeB': 'MappedType2'
+        })
+        print("Hub data cleaned and mapped.")
+
+    def compare_and_populate_entity(self):
+        """Compare remind and hub data to populate entity column."""
+        # Example comparison logic
+        self.remind_df = self.remind_df.merge(self.hub_df[['TransactionID', 'Entity']], on='TransactionID', how='left')
+        self.remind_df['Entity'].fillna('Unknown', inplace=True)
+        print("Entity column populated in remind data.")
+
+    def get_cpa_details(self):
+        """Get details of CPA."""
+        # Example CPA details logic
+        cpa_details = self.remind_df[self.remind_df['TransactionType'] == 'CPA']
+        print("CPA details retrieved.")
+        return cpa_details
+
+    def create_control_dashboard(self, filename: str):
+        """Create control dashboard in Excel."""
+        # Example control dashboard logic
+        summary = self.remind_df.groupby('Entity')['Amount'].sum().reset_index()
+        with pd.ExcelWriter(filename) as writer:
+            self.remind_df.to_excel(writer, sheet_name='Remind Data', index=False)
+            self.hub_df.to_excel(writer, sheet_name='Hub Data', index=False)
+            summary.to_excel(writer, sheet_name='Summary', index=False)
+        print("Control dashboard created in Excel.")
+
+    def get_entity_details(self):
+        """Get entity details using fusion data."""
+        # Example entity details logic
+        entity_details = self.fusion_df[['EntityID', 'Detail']]
+        self.remind_df = self.remind_df.merge(entity_details, left_on='Entity', right_on='EntityID', how='left')
+        print("Entity details retrieved from fusion data.")
+        return entity_details
+
+    def gather_final_upload_details(self):
+        """Gather all details and place them in final upload data frame."""
+        # Example gathering final details logic
+        self.final_upload_df = pd.merge(self.remind_df, self.hub_df[['TransactionID', 'HubSpecificColumn']], on='TransactionID', how='left')
+        print("Final upload details gathered.")
+
+    def export_to_excel(self, filename: str):
+        """Export data to Excel with required formatting."""
+        # Example export logic
+        with pd.ExcelWriter(filename) as writer:
+            self.final_upload_df.to_excel(writer, sheet_name='Final Upload', index=False)
+            # Applying formatting
+            workbook = writer.book
+            worksheet = writer.sheets['Final Upload']
+            format1 = workbook.add_format({'num_format': '#,##0.00'})
+            worksheet.set_column('A:Z', 18, format1)
+        print("Data exported to Excel with formatting.")
+
+    def populate_control_data(self, filename: str):
+        """Populate control data into Excel with required formatting."""
+        # Example control data logic
+        control_data = self.final_upload_df[['Entity', 'Amount', 'HubSpecificColumn']]
+        with pd.ExcelWriter(filename) as writer:
+            control_data.to_excel(writer, sheet_name='Control Data', index=False)
+            # Applying formatting
+            workbook = writer.book
+            worksheet = writer.sheets['Control Data']
+            format1 = workbook.add_format({'num_format': '#,##0.00', 'bold': True})
+            worksheet.set_column('A:Z', 18, format1)
+        print("Control data populated into Excel with formatting.")
+
+# Example usage
+if __name__ == "__main__":
+    processor = DataProcessor('remind.xlsx', 'hub.xlsx', 'fusion.xlsx')
+    processor.import_data()
+    processor.clean_remind_data()
+    processor.clean_hub_data()
+    processor.compare_and_populate_entity()
+    cpa_details = processor.get_cpa_details()
+    processor.create_control_dashboard('control_dashboard.xlsx')
+    entity_details = processor.get_entity_details()
+    processor.gather_final_upload_details()
+    processor.export_to_excel('final_upload.xlsx')
+    processor.populate_control_data('control_data.xlsx')
