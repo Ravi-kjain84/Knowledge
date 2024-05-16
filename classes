@@ -82,15 +82,36 @@ class DataProcessor:
         
         print("Remind data cleaned and mapped.")
 
-    # Other methods (unchanged)
     def clean_hub_data(self):
-        """Clean and map hub data."""
-        # Example data cleaning and mapping logic
-        self.hub_df.dropna(subset=['TransactionID'], inplace=True)
-        self.hub_df['Amount'] = self.hub_df['Amount'].apply(lambda x: float(x.replace(',', '')))
-        # Example of using a mapping sheet
-        type_mapping = self.mapping_dfs['TransactionTypeMapping']
-        self.hub_df = self.hub_df.merge(type_mapping, on='TransactionType', how='left')
+        """Clean and map hub data with detailed operations."""
+        # 1. Filter data based on account list from a mapping file
+        account_list = self.mapping_dfs['AccountList']['Account'].tolist()
+        self.hub_df = self.hub_df[self.hub_df['Account'].isin(account_list)]
+        
+        # 2. Divide the Amount column by 100
+        self.hub_df['Amount'] = self.hub_df['Amount'] / 100
+        
+        # 3. Create AccountDetails column by combining Branch, Serial, and Suffix
+        self.hub_df['AccountDetails'] = self.hub_df.apply(
+            lambda x: f"{str(x['Branch']).zfill(3)}-{str(x['Serial']).zfill(6)}-{str(x['Suffix']).zfill(3)}",
+            axis=1
+        )
+        
+        # 4. Create Contact column by concatenating six columns
+        self.hub_df['Contact'] = self.hub_df[['Col1', 'Col2', 'Col3', 'Col4', 'Col5', 'Col6']].fillna('').apply(
+            lambda x: ''.join(x.str.strip()), axis=1
+        )
+        
+        # 5. Create Entity mapping and update Entity column
+        entity_mapping = self.hub_df[['Contact', 'Entity']].drop_duplicates('Contact')
+        self.hub_df = self.hub_df.merge(entity_mapping, on='Contact', how='left', suffixes=('', '_new'))
+        self.hub_df['Entity'] = self.hub_df['Entity_new']
+        self.hub_df.drop(columns=['Entity_new'], inplace=True)
+        
+        # 6. Select and rename the required columns
+        self.hub_df = self.hub_df[['Account', 'AccountDetails', 'Entity', 'Amount', 'Product']]
+        self.hub_df.columns = ['Account', 'AccountDetails', 'Entity', 'Amount', 'Product']
+        
         print("Hub data cleaned and mapped.")
 
     def compare_and_populate_entity(self):
