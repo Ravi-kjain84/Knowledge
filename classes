@@ -1,9 +1,9 @@
 import pandas as pd
 
 class DataProcessor:
-    def __init__(self, remind_file: str, remind_sheet: str, hub_file: str, hub_sheet: str, fusion_file: str, fusion_sheet: str):
+    def __init__(self, remind_file: str, remind_sheet: str, hub_file: str, hub_sheet: str, fusion_file: str, fusion_sheet: str, mapping_file: str, mapping_sheets: list):
         """
-        Initialize the DataProcessor with file paths and sheet names for the required data files.
+        Initialize the DataProcessor with file paths and sheet names for the required data files and mapping file.
         
         Args:
             remind_file (str): Path to the remind Excel file.
@@ -12,6 +12,8 @@ class DataProcessor:
             hub_sheet (str): Sheet name in the hub Excel file.
             fusion_file (str): Path to the fusion Excel file.
             fusion_sheet (str): Sheet name in the fusion Excel file.
+            mapping_file (str): Path to the mapping Excel file.
+            mapping_sheets (list): List of sheet names in the mapping Excel file.
         """
         self.remind_file = remind_file
         self.remind_sheet = remind_sheet
@@ -19,9 +21,12 @@ class DataProcessor:
         self.hub_sheet = hub_sheet
         self.fusion_file = fusion_file
         self.fusion_sheet = fusion_sheet
+        self.mapping_file = mapping_file
+        self.mapping_sheets = mapping_sheets
         self.remind_df = None
         self.hub_df = None
         self.fusion_df = None
+        self.mapping_dfs = {}
         self.final_upload_df = None
 
     def import_data(self):
@@ -29,28 +34,63 @@ class DataProcessor:
         self.remind_df = pd.read_excel(self.remind_file, sheet_name=self.remind_sheet)
         self.hub_df = pd.read_excel(self.hub_file, sheet_name=self.hub_sheet)
         self.fusion_df = pd.read_excel(self.fusion_file, sheet_name=self.fusion_sheet)
+        for sheet in self.mapping_sheets:
+            self.mapping_dfs[sheet] = pd.read_excel(self.mapping_file, sheet_name=sheet)
         print("Data imported successfully.")
 
     def clean_remind_data(self):
-        """Clean and map remind data."""
-        # Example data cleaning and mapping logic
-        self.remind_df.dropna(subset=['TransactionID'], inplace=True)
-        self.remind_df['Amount'] = self.remind_df['Amount'].apply(lambda x: float(x.replace(',', '')))
-        self.remind_df['MappedColumn'] = self.remind_df['TransactionType'].map({
-            'TypeA': 'MappedType1',
-            'TypeB': 'MappedType2'
-        })
+        """Clean and map remind data with detailed operations."""
+        # 1. Replace set of three characters with blank
+        self.remind_df['SomeColumn'] = self.remind_df['SomeColumn'].str.replace('XYZ', '')
+        
+        # 2. Filter data based on account list from a mapping file
+        account_list = self.mapping_dfs['AccountList']['Account'].tolist()
+        self.remind_df = self.remind_df[self.remind_df['Account'].isin(account_list)]
+        
+        # 3. Exclude data based on customer list from a mapping file
+        customer_list = self.mapping_dfs['CustomerList']['Customer'].tolist()
+        self.remind_df = self.remind_df[~self.remind_df['Customer'].isin(customer_list)]
+        
+        # 4. Ensure unique entity-area pairs and merge back to remind data
+        entity_area_df = self.mapping_dfs['EntityArea'][['Entity', 'Area']].drop_duplicates('Entity')
+        self.remind_df = self.remind_df.merge(entity_area_df, on='Entity', how='left')
+        
+        # 5. Similar operation for another set of columns from another mapping file
+        entity_product_df = self.mapping_dfs['EntityProduct'][['Entity', 'Product']].drop_duplicates('Entity')
+        self.remind_df = self.remind_df.merge(entity_product_df, on='Entity', how='left')
+        
+        # 6. Remove rows where both identity and area columns are blank
+        self.remind_df = self.remind_df[~(self.remind_df['Identity'].isna() & self.remind_df['Area'].isna())]
+        
+        # 7. Remove rows with specific amount types
+        self.remind_df = self.remind_df[~self.remind_df['AmountType'].isin([53, 73])]
+        
+        # 8. Change the sign of Amount based on the Sign column
+        self.remind_df['Amount'] = self.remind_df.apply(
+            lambda x: x['Amount'] if x['Sign'] == '+' else -x['Amount'], axis=1
+        )
+        
+        # 9. Create an AccountDetails column
+        self.remind_df['AccountDetails'] = self.remind_df.apply(
+            lambda x: f"{str(x['Branch']).zfill(3)}-{str(x['Serial']).zfill(6)}-{str(x['Suffix']).zfill(3)}",
+            axis=1
+        )
+        
+        # 10. Select specific columns and rename them
+        self.remind_df = self.remind_df[['Identity', 'Entity', 'Amount', 'AccountDetails', 'LocalProductCode']]
+        self.remind_df.columns = ['ReportingIdentity', 'Entity', 'Amount', 'AccountDetails', 'ProductCode']
+        
         print("Remind data cleaned and mapped.")
 
+    # Other methods (unchanged)
     def clean_hub_data(self):
         """Clean and map hub data."""
         # Example data cleaning and mapping logic
         self.hub_df.dropna(subset=['TransactionID'], inplace=True)
         self.hub_df['Amount'] = self.hub_df['Amount'].apply(lambda x: float(x.replace(',', '')))
-        self.hub_df['MappedColumn'] = self.hub_df['TransactionType'].map({
-            'TypeA': 'MappedType1',
-            'TypeB': 'MappedType2'
-        })
+        # Example of using a mapping sheet
+        type_mapping = self.mapping_dfs['TransactionTypeMapping']
+        self.hub_df = self.hub_df.merge(type_mapping, on='TransactionType', how='left')
         print("Hub data cleaned and mapped.")
 
     def compare_and_populate_entity(self):
@@ -115,28 +155,3 @@ class DataProcessor:
             format1 = workbook.add_format({'num_format': '#,##0.00', 'bold': True})
             worksheet.set_column('A:Z', 18, format1)
         print("Control data populated into Excel with formatting.")
-
----
-
-from scripts.data_processor import DataProcessor
-
-if __name__ == "__main__":
-    processor = DataProcessor(
-        remind_file='data/remind.xlsx',
-        remind_sheet='RemindSheet',
-        hub_file='data/hub.xlsx',
-        hub_sheet='HubSheet',
-        fusion_file='data/fusion.xlsx',
-        fusion_sheet='FusionSheet'
-    )
-    processor.import_data()
-    processor.clean_remind_data()
-    processor.clean_hub_data()
-    processor.compare_and_populate_entity()
-    cpa_details = processor.get_cpa_details()
-    processor.create_control_dashboard('output/control_dashboard.xlsx')
-    entity_details = processor.get_entity_details()
-    processor.gather_final_upload_details()
-    processor.export_to_excel('output/final_upload.xlsx')
-    processor.populate_control_data('output/control_data.xlsx')
-
