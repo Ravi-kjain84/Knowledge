@@ -1,3 +1,15 @@
+
+= let
+    Value = [Value],
+    Currency = [Currency],
+    RangeStart = Number.RoundDown(Value / 50000) * 50000,
+    RangeEnd = RangeStart + 49999,
+    RangeText = if Value < 5000 then Currency & " less than " & Currency & " 5000" else Currency & " " & Text.From(RangeStart + 1) & " to " & Currency & " " & Text.From(RangeEnd)
+in
+    RangeText
+
+
+
 import pandas as pd
 
 # Sample data for the DataFrame
