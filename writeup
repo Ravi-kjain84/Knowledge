@@ -1,4 +1,41 @@
 
+import pandas as pd
+
+# Example DataFrame
+df = pd.DataFrame({
+    'column2': ['A', 'B', 'C', 'D', 'A', 'F']
+})
+
+# Example mapping DataFrame
+mapping_df = pd.DataFrame({
+    'column2': ['B', 'C', 'D'],
+    'column3': ['MappedValue1', 'MappedValue2', 'MappedValue3']
+})
+
+# Define a function to apply the logic
+def populate_column1(row, mapping_dict):
+    if row['column2'] == 'A':
+        return 'b'
+    elif row['column2'] in mapping_dict:
+        return mapping_dict[row['column2']]
+    else:
+        return 'e'
+
+# Create a dictionary for faster lookup from the mapping DataFrame
+mapping_dict = mapping_df.set_index('column2')['column3'].to_dict()
+
+# Apply the function to populate 'column1'
+df['column1'] = df.apply(populate_column1, axis=1, mapping_dict=mapping_dict)
+
+print(df)
+
+
+
+
+
+
+
+
 = let
     Value = [Value],
     Currency = [Currency],
