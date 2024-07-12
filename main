@@ -1,3 +1,32 @@
+
+import pandas as pd
+
+# Sample DataFrame
+data = {
+    'Column1': [1, 2, 3],
+    'Column2': [4, 5, 6],
+    'Column3': [7, 8, 9]
+}
+
+df = pd.DataFrame(data)
+
+# Convert DataFrame to .dat file
+def df_to_dat(df, file_path):
+    # Open file in write mode
+    with open(file_path, 'w') as file:
+        # Write the initial line
+        file.write('! data\n')
+        # Write the DataFrame to the file with the specified separator
+        df.to_csv(file, sep='; ', index=False, header=True)
+
+# Specify the file path
+file_path = 'output.dat'
+
+# Call the function to write DataFrame to .dat file
+df_to_dat(df, file_path)
+
+
+
 from scripts.data_processor import DataProcessor
 
 if __name__ == "__main__":
