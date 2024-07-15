@@ -1,3 +1,52 @@
+import pandas as pd
+
+# Sample DataFrame with string and float columns
+data = {
+    'col1': [1, 2, 3],
+    'col2': [4.5, 5.5, 6.5],  # Column to keep all decimals
+    'col3': [7, 8, 9],
+    'col4': [10, 11, 12],
+    'col5': ['A', 'B', 'C'],  # String column
+    'col6': [16, 17, 18],
+    'col7': ['X', 'Y', 'Z'],  # String column
+    'col8': [22, 23, 24],
+    'col9': [25, 26, 27],
+    'col10': [28.5, 29.5, 30.5]  # Column to round to zero decimals
+}
+
+df = pd.DataFrame(data)
+
+# File path
+file_path = 'output.txt'
+
+# Header string
+header = "My data is here:"
+
+# Specify the column names
+float_col_to_round = 'col10'
+float_col_keep_decimals = 'col2'
+
+# Write to file with header
+with open(file_path, 'w') as file:
+    file.write(f'{header}\n')
+    for index, row in df.iterrows():
+        formatted_values = []
+        for col in df.columns:
+            value = row[col]
+            if col == float_col_to_round:
+                formatted_values.append(f'{value:.0f}')  # Round to zero decimals
+            else:
+                formatted_values.append(f'{value}')
+        line = ';'.join(formatted_values)
+        file.write(f'{line}\n')
+
+# Display the content of the text file for verification
+with open(file_path, 'r') as file:
+    print(file.read())
+
+
+
+
 
 import pandas as pd
 
