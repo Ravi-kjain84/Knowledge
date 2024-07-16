@@ -1,3 +1,54 @@
+
+import pandas as pd
+from pandas import ExcelWriter
+
+# Sample DataFrames
+main_df = pd.DataFrame({'EntityId1': [1, 2, 3, 4, 5], 'EntityId2': [10, 20, 30, 40, 50], 'Value': [10, 20, 30, 40, 50]})
+df1 = pd.DataFrame({'EntityId1': [1, 2, 3], 'MappedValue1': [100, 200, 300]})
+df2 = pd.DataFrame({'Key1': [2, 3, 4], 'Key2': [20, 30, 40], 'MappedValue2': [150, 250, 350]})
+df3 = pd.DataFrame({'Id': [1, 3, 5], 'MappedValue3': [110, 210, 310]})
+df4 = pd.DataFrame({'Code': [1, 2, 4], 'Details': [10, 20, 30, 40, 50]})
+df5 = pd.DataFrame({'ID': [2, 3, 5], 'Description': [1, 2, 3, 4, 5]})
+
+mapping_dfs = [
+    ('df1', df1, ['EntityId1']),
+    ('df2', df2, ['Key1', 'Key2']),
+    ('df3', df3, ['Id']),
+    ('df4', df4, ['Code']),
+    ('df5', df5, ['ID'])
+]
+
+# Create a list to store the unmatched values
+unmatched_values_list = []
+
+# Merge main_df with each mapping DataFrame and track unmatched values
+for name, mapping_df, keys in mapping_dfs:
+    merged_df = main_df.merge(mapping_df, how='left', left_on=keys, right_on=keys)
+    # Identify the rows in main_df that don't have matching rows in the mapping DataFrame
+    unmatched = merged_df[merged_df[keys[0]].isna()][keys]
+    for value in unmatched.itertuples(index=False):
+        unmatched_values_list.append([name, ', '.join(keys), tuple(value)])
+
+# Create a DataFrame from the unmatched values list
+unmatched_values_df = pd.DataFrame(unmatched_values_list, columns=['DataFrame', 'Key Column', 'Missing Value'])
+
+# Create a summary count table
+summary_counts = unmatched_values_df.groupby(['DataFrame', 'Key Column']).size().reset_index(name='Unmatched Count')
+
+# Create a new Excel writer object
+with ExcelWriter('control_sheet.xlsx') as writer:
+    # Write the unmatched values to a single worksheet
+    unmatched_values_df.to_excel(writer, sheet_name='Unmatched Values', index=False)
+    
+    # Write the summary count table to another worksheet
+    summary_counts.to_excel(writer, sheet_name='Summary', index=False)
+
+print("Control sheet with unmatched values and summary count table has been written to 'control_sheet.xlsx'.")
+
+----//////
+
+
+
 import pandas as pd
 from pandas import ExcelWriter
 
