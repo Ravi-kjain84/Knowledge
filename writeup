@@ -1,4 +1,44 @@
 import pandas as pd
+from pandas import ExcelWriter
+
+# Sample DataFrames and their key columns
+df1 = pd.DataFrame({'EntityId': [1, 2, 3, 4, 1], 'Value': [10, 20, 30, 40, 50]})
+df2 = pd.DataFrame({'Key': [5, 6, 7, 8, 5], 'Data': [100, 200, 300, 400, 500]})
+df3 = pd.DataFrame({'Id': [9, 10, 11, 12, 12], 'Info': [1000, 2000, 3000, 4000, 5000]})
+df4 = pd.DataFrame({'Code': [13, 14, 15, 16, 13], 'Details': [10, 20, 30, 40, 50]})
+df5 = pd.DataFrame({'ID': [17, 18, 19, 20, 20], 'Description': [1, 2, 3, 4, 5]})
+
+dataframes = [
+    (df1, 'EntityId'),
+    (df2, 'Key'),
+    (df3, 'Id'),
+    (df4, 'Code'),
+    (df5, 'ID')
+]
+
+# Create a new Excel writer object
+with ExcelWriter('data_with_duplicates.xlsx') as writer:
+    for idx, (df, key) in enumerate(dataframes, start=1):
+        # Check for duplicates
+        duplicates = df[df.duplicated(key, keep=False)]
+        
+        # Write the original DataFrame to the Excel sheet
+        df.to_excel(writer, sheet_name=f'DataFrame{idx}', index=False)
+        
+        # Write the duplicates to the Excel sheet if any
+        if not duplicates.empty:
+            duplicates.to_excel(writer, sheet_name=f'Duplicates{idx}', index=False)
+
+print("DataFrames and duplicates have been written to 'data_with_duplicates.xlsx'.")
+
+
+
+
+
+
+
+
+import pandas as pd
 
 # Sample DataFrame with string and float columns
 data = {
