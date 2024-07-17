@@ -1,4 +1,36 @@
 import pandas as pd
+import numpy as np
+
+# Example dataframe
+data = {'column': [np.nan, 'abc', np.nan, np.nan, 'abc']}
+df = pd.DataFrame(data)
+
+# Identify the single non-null value in the column
+unique_values = df['column'].dropna().unique()
+
+# Create the control DataFrame without NULL values
+control_df = df.dropna().copy()
+
+# Determine the message for control DataFrame
+if len(unique_values) == 1:
+    control_df['status'] = 'Unique value found'
+    single_value = unique_values[0]
+    # Fill NaN values with the single value in the original DataFrame
+    df['column'].fillna(single_value, inplace=True)
+else:
+    control_df['status'] = 'More than one unique non-null value or none at all'
+
+print("Original DataFrame after filling NaNs:")
+print(df)
+print("\nControl DataFrame:")
+print(control_df)
+
+---/--
+
+
+
+
+import pandas as pd
 from pandas import ExcelWriter
 
 # Sample DataFrames
