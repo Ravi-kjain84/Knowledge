@@ -1,3 +1,41 @@
+import os
+import pandas as pd
+
+# Example mapping dataframe
+mapping_df = pd.DataFrame({
+    'EntityId': [1, 2, 3, 4, 5, 'common'],
+    'EntityCode': ['A', 'B', 'C', 'D', 'E', 'X']
+})
+
+# Path to the main folder containing subfolders with country dataframes
+main_folder_path = 'path_to_main_folder'
+
+# Loop through each subfolder
+for country_folder in os.listdir(main_folder_path):
+    country_folder_path = os.path.join(main_folder_path, country_folder)
+    
+    if os.path.isdir(country_folder_path):
+        # Assuming each subfolder contains a CSV file with the country dataframe
+        for file_name in os.listdir(country_folder_path):
+            if file_name.endswith('.csv'):
+                file_path = os.path.join(country_folder_path, file_name)
+                
+                # Load the country dataframe
+                country_df = pd.read_csv(file_path)
+                
+                # Filter the mapping dataframe based on EntityId in country dataframe
+                entity_ids_in_country = country_df['EntityId'].unique()
+                filtered_mapping_df = mapping_df[mapping_df['EntityId'].isin(entity_ids_in_country) | (mapping_df['EntityId'] == 'common')]
+                
+                # Process the filtered mapping dataframe as needed
+                print(f"Filtered mapping dataframe for {country_folder}:")
+                print(filtered_mapping_df)
+
+                # If you need to save or further process the filtered_mapping_df, you can do so here
+
+-----------
+
+
 import pandas as pd
 import numpy as np
 
