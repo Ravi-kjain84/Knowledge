@@ -1,3 +1,36 @@
+import pandas as pd
+
+# Sample original data frame
+data = {
+    'Account': ['A001', 'A002', 'A003', 'A004', 'A005'],
+    'Affiliate': ['Affiliate_1', 'Affiliate_None', 'Affiliate_2', 'Affiliate_None', 'Affiliate_3'],
+    'Amount': [100, 200, 300, 400, 500]
+}
+df = pd.DataFrame(data)
+
+# Reference table with account validity
+reference_data = {
+    'Account': ['A001', 'A002', 'A003', 'A004', 'A005'],
+    'IsValid': ['y', 'y', 'n', 'y', 'n']
+}
+reference_df = pd.DataFrame(reference_data)
+
+# Merge the original data frame with the reference table
+merged_df = pd.merge(df, reference_df, on='Account')
+
+# Filter the accounts where IsValid is 'y' and Affiliate is 'Affiliate_None'
+invalid_affiliates = merged_df[(merged_df['IsValid'] == 'y') & (merged_df['Affiliate'] == 'Affiliate_None')]
+
+# Get the list of such accounts
+invalid_accounts = invalid_affiliates['Account'].tolist()
+
+# Display the list of invalid accounts
+print("List of accounts with invalid affiliates:", invalid_accounts)
+
+
+
+---------
+
 import os
 import pandas as pd
 
