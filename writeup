@@ -1,5 +1,45 @@
 import pandas as pd
 
+def process_invoice_excel(input_excel_path, output_excel_path, column_names):
+    # Read the Excel file starting from row 12
+    df = pd.read_excel(input_excel_path, skiprows=11, header=None)
+    
+    # Set the column names explicitly
+    df.columns = column_names
+
+    # Remove completely blank rows
+    df.dropna(how='all', inplace=True)
+
+    # Remove rows with no relevant data
+    df.dropna(subset=[column_names[0]], inplace=True)  # Assuming the first column is mandatory
+
+    # Find the index of the "subtotal" row
+    subtotal_index = df[df.apply(lambda row: row.astype(str).str.contains('subtotal', case=False).any(), axis=1)].index
+
+    # If "subtotal" is found, keep rows only before "subtotal"
+    if not subtotal_index.empty:
+        df = df.loc[:subtotal_index[0] - 1]
+
+    # Reset index for the cleaned DataFrame
+    df.reset_index(drop=True, inplace=True)
+
+    # Save the cleaned DataFrame to a new Excel file
+    df.to_excel(output_excel_path, index=False)
+
+# Example usage
+input_excel_path = 'input_invoice.xlsx'
+output_excel_path = 'cleaned_invoice_items.xlsx'
+column_names = ["Description", "Quantity", "Price", "Total"]  # Adjust these as needed
+process_invoice_excel(input_excel_path, output_excel_path, column_names)
+
+
+
+
+
+----------
+
+import pandas as pd
+
 def process_invoice_excel(input_excel_path, output_excel_path):
     # Read the Excel file starting from row 12
     df = pd.read_excel(input_excel_path, skiprows=11)
