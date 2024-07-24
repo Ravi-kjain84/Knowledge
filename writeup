@@ -1,4 +1,39 @@
 import pandas as pd
+import numpy as np
+
+# Sample data
+data = {
+    'column1': ['text1', 1.5, '', 3, 'text2'],
+    'column2': [2, 'text3', 2.5, '', 5]
+}
+
+# Creating DataFrame
+df = pd.DataFrame(data)
+
+def concat_or_add(row):
+    val1, val2 = row['column1'], row['column2']
+    
+    if pd.isna(val1) or val1 == '':
+        val1 = 0 if isinstance(val2, (int, float)) else ''
+    if pd.isna(val2) or val2 == '':
+        val2 = 0 if isinstance(val1, (int, float)) else ''
+        
+    if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+        return val1 + val2
+    else:
+        return str(val1) + str(val2)
+
+df['column3'] = df.apply(concat_or_add, axis=1)
+
+print(df)
+
+
+
+
+
+----------
+
+import pandas as pd
 
 def process_invoice_excel(input_excel_path, output_excel_path, column_names):
     # Read the Excel file starting from row 12
