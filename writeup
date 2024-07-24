@@ -1,3 +1,41 @@
+import fitz  # PyMuPDF
+import csv
+
+# Function to extract text from PDF and save to a CSV
+def pdf_to_csv(pdf_path, csv_path):
+    # Open the PDF
+    pdf_document = fitz.open(pdf_path)
+    
+    # Create a list to hold the lines of text
+    text_lines = []
+    
+    # Iterate through each page
+    for page_num in range(pdf_document.page_count):
+        page = pdf_document[page_num]
+        text = page.get_text("text")
+        # Split the text into lines and extend the list
+        text_lines.extend(text.splitlines())
+    
+    # Remove blank lines
+    text_lines = [line for line in text_lines if line.strip()]
+
+    # Write the text lines to a CSV file
+    with open(csv_path, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        for line in text_lines:
+            writer.writerow([line])
+
+# Example usage
+pdf_path = 'path/to/your/file.pdf'
+csv_path = 'path/to/your/output.csv'
+pdf_to_csv(pdf_path, csv_path)
+
+
+
+
+-----
+
+
 import pandas as pd
 import numpy as np
 
