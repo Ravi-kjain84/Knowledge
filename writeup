@@ -1,3 +1,33 @@
+import pandas as pd
+
+# Sample DataFrame
+data = {
+    'Col1': [None, 'A', None, 'D'],
+    'Col2': ['B', None, 'C', None],
+    'Col3': [None, None, 'E', 'F'],
+    'Col4': ['G', 'H', None, 'I']
+}
+
+df = pd.DataFrame(data)
+
+print("Original DataFrame:")
+print(df)
+
+# Function to shift non-null values to the left
+def shift_left(row):
+    non_nulls = [x for x in row if pd.notnull(x)]
+    nulls = [x for x in row if pd.isnull(x)]
+    return non_nulls + nulls
+
+# Apply the function to each row
+df_shifted = df.apply(shift_left, axis=1, result_type='expand')
+
+print("\nDataFrame after shifting values to the left:")
+print(df_shifted)
+
+-----
+
+
 import fitz  # PyMuPDF
 import csv
 
