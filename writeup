@@ -1,3 +1,38 @@
+import openpyxl
+import pandas as pd
+
+# Load the Excel file
+excel_file = 'path_to_your_excel_file.xlsx'
+wb = openpyxl.load_workbook(excel_file)
+ws = wb.active
+
+# Function to unmerge cells and keep the value in the first cell
+def unmerge_cells(ws):
+    merged_cells = ws.merged_cells.ranges
+    for merged_range in merged_cells:
+        merged_range_str = str(merged_range)
+        top_left_cell_value = ws[merged_range_str.split(":")[0]].value
+        ws.unmerge_cells(merged_range_str)
+        ws[merged_range_str.split(":")[0]] = top_left_cell_value
+
+# Unmerge cells in the active sheet
+unmerge_cells(ws)
+
+# Save the updated Excel file
+updated_excel_file = 'unmerged_excel_file.xlsx'
+wb.save(updated_excel_file)
+
+# Load the unmerged Excel file into a Pandas DataFrame
+df = pd.read_excel(updated_excel_file)
+
+print("DataFrame after unmerging cells:")
+print(df)
+
+------
+
+
+
+
 import pandas as pd
 
 # Sample DataFrame
