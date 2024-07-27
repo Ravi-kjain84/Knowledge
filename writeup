@@ -1,3 +1,78 @@
+
+from pptx import Presentation
+from pptx.util import Inches, Pt
+from pptx.enum.shapes import MSO_SHAPE
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
+
+# Sample dataframe
+data = {
+    'Category': ['A', 'B', 'C', 'D'],
+    'Values': [10, 20, 30, 40]
+}
+df = pd.DataFrame(data)
+
+# Load the existing presentation
+prs = Presentation('existing_presentation.pptx')
+
+# Function to create a chart from a dataframe and return as an image stream
+def create_chart_image(dataframe):
+    fig, ax = plt.subplots()
+    ax.bar(dataframe['Category'], dataframe['Values'])
+    ax.set_title("Sample Data Chart")
+
+    # Save the plot to a BytesIO object
+    img_stream = io.BytesIO()
+    plt.savefig(img_stream, format='png')
+    img_stream.seek(0)
+
+    # Close the plot to free memory
+    plt.close(fig)
+    
+    return img_stream
+
+# Identify the specific image to replace (e.g., by its description or by iterating over shapes)
+image_to_replace_description = "ReplaceMe"
+new_image_description = "This is the new chart created from the DataFrame."
+
+# Iterate over slides and shapes to find and replace the image
+for slide in prs.slides:
+    for shape in slide.shapes:
+        if shape.shape_type == 13:  # 13 corresponds to picture shapes
+            if shape.has_text_frame and shape.text_frame.text == image_to_replace_description:
+                # Remove the old picture
+                slide.shapes._spTree.remove(shape._element)
+
+                # Create the new chart image
+                chart_image_stream = create_chart_image(df)
+
+                # Add the new chart image
+                new_image = slide.shapes.add_picture(chart_image_stream, shape.left, shape.top, shape.width, shape.height)
+
+                # Add a text box for the description
+                left = new_image.left
+                top = new_image.top + new_image.height + Inches(0.2)
+                width = new_image.width
+                height = Inches(1)
+
+                text_box = slide.shapes.add_textbox(left, top, width, height)
+                text_frame = text_box.text_frame
+                p = text_frame.add_paragraph()
+                p.text = new_image_description
+                p.font.size = Pt(14)
+
+                break
+
+# Save the updated presentation
+prs.save('updated_presentation.pptx')
+
+
+
+
+
+-----
+
 from pptx import Presentation
 from pptx.util import Inches
 from pptx.enum.shapes import MSO_SHAPE
