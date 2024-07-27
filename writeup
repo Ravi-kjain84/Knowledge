@@ -1,3 +1,72 @@
+from pptx import Presentation
+from pptx.util import Inches
+from pptx.enum.shapes import MSO_SHAPE
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
+
+# Sample dataframe
+data = {
+    'Category': ['A', 'B', 'C', 'D'],
+    'Values': [10, 20, 30, 40]
+}
+df = pd.DataFrame(data)
+
+# Load the existing presentation
+prs = Presentation('existing_presentation.pptx')
+
+# Function to add a table to a slide
+def add_table_to_slide(slide, dataframe, title):
+    rows, cols = dataframe.shape
+    table = slide.shapes.add_table(rows + 1, cols, Inches(0.5), Inches(1.5), Inches(9.0), Inches(0.8 * (rows + 1))).table
+
+    # Set column headings
+    for i, column in enumerate(dataframe.columns):
+        table.cell(0, i).text = column
+
+    # Add the data
+    for row in range(rows):
+        for col in range(cols):
+            table.cell(row + 1, col).text = str(dataframe.iat[row, col])
+
+# Function to add a chart to a slide
+def add_chart_to_slide(slide, dataframe, title):
+    fig, ax = plt.subplots()
+    ax.bar(dataframe['Category'], dataframe['Values'])
+    ax.set_title(title)
+    
+    # Save the plot to a BytesIO object
+    img_stream = io.BytesIO()
+    plt.savefig(img_stream, format='png')
+    img_stream.seek(0)
+
+    # Add image to slide
+    slide.shapes.add_picture(img_stream, Inches(0.5), Inches(1.5), Inches(9.0), Inches(4.5))
+
+    # Close the plot to free memory
+    plt.close(fig)
+
+# Add a new slide for the table
+slide_layout = prs.slide_layouts[5]  # Choosing a blank slide layout
+slide = prs.slides.add_slide(slide_layout)
+title = slide.shapes.title
+title.text = "Data Table"
+add_table_to_slide(slide, df, "Sample Data Table")
+
+# Add a new slide for the chart
+slide_layout = prs.slide_layouts[5]  # Choosing a blank slide layout
+slide = prs.slides.add_slide(slide_layout)
+title = slide.shapes.title
+title.text = "Data Chart"
+add_chart_to_slide(slide, df, "Sample Data Chart")
+
+# Save the presentation
+prs.save('updated_presentation.pptx')
+
+----
+
+
+
 import pandas as pd
 
 # Sample dataframe
