@@ -1,3 +1,75 @@
+import pandas as pd
+
+# Sample dataframe
+data = {
+    'Category': ['A', 'A', 'B', 'B', 'C', 'C'],
+    'Type': ['X', 'Y', 'X', 'Y', 'X', 'Y'],
+    'Value': [10, 20, 15, 25, 10, 30]
+}
+df = pd.DataFrame(data)
+
+# Groupby and pivot operations
+grouped = df.groupby(['Category', 'Type']).sum().reset_index()
+pivoted = df.pivot_table(index='Category', columns='Type', values='Value', aggfunc='sum').reset_index()
+
+# Create Excel file with views
+with pd.ExcelWriter('control_sheet.xlsx') as writer:
+    df.to_excel(writer, sheet_name='Original Data', index=False)
+    grouped.to_excel(writer, sheet_name='Grouped Data', index=False)
+    pivoted.to_excel(writer, sheet_name='Pivoted Data', index=False)
+
+----
+
+from pptx import Presentation
+from pptx.util import Inches
+import pandas as pd
+
+# Function to add a dataframe to a slide
+def add_table_to_slide(slide, dataframe, title):
+    rows, cols = dataframe.shape
+    table = slide.shapes.add_table(rows + 1, cols, Inches(0.5), Inches(1.5), Inches(9.0), Inches(0.8 * (rows + 1))).table
+
+    # Set title
+    title_shape = slide.shapes.title
+    title_shape.text = title
+
+    # Set column headings
+    for i, column in enumerate(dataframe.columns):
+        table.cell(0, i).text = column
+
+    # Add the data
+    for row in range(rows):
+        for col in range(cols):
+            table.cell(row + 1, col).text = str(dataframe.iat[row, col])
+
+# Create presentation object
+prs = Presentation()
+
+# Titles for slides
+titles = ['Original Data', 'Grouped Data', 'Pivoted Data']
+comments = ['This is the original dataset.', 'Data grouped by Category and Type.', 'Pivot table of the data.']
+
+# Load data from the Excel file
+with pd.ExcelFile('control_sheet.xlsx') as xls:
+    for title, comment in zip(titles, comments):
+        slide = prs.slides.add_slide(prs.slide_layouts[5])
+        df = pd.read_excel(xls, sheet_name=title)
+        add_table_to_slide(slide, df, title)
+        
+        # Add comments
+        textbox = slide.shapes.add_textbox(Inches(0.5), Inches(5.5), Inches(9.0), Inches(1.0))
+        text_frame = textbox.text_frame
+        p = text_frame.add_paragraph()
+        p.text = comment
+
+# Save the presentation
+prs.save('control_presentation.pptx')
+
+
+
+
+---/
+
 import openpyxl
 import pandas as pd
 
