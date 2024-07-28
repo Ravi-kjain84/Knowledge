@@ -135,10 +135,11 @@ for slide in prs.slides:
             for text_info in text_boxes_to_replace:
                 if shape.name == text_info['name']:
                     text_frame = shape.text_frame
-                    for paragraph in text_frame​⬤
+                    for paragraph in text_frame.paragraphs:
+                        paragraph.text = text_info['new_text']
 
-
-
+# Save the updated presentation
+prs.save('updated_presentation.pptx')
 
 
 
