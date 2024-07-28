@@ -3,6 +3,172 @@ from pptx.util import Inches, Pt
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
+import comtypes.client
+
+def update_presentation(pptx_path, output_pptx_path, output_pdf_path, images_to_replace, tables_to_replace, text_boxes_to_replace):
+    # Load the existing presentation
+    prs = Presentation(pptx_path)
+
+    # Function to create a chart from a dataframe and return as an image stream
+    def create_chart_image(dataframe):
+        fig, ax = plt.subplots()
+        ax.bar(dataframe['Category'], dataframe['Values'])
+        ax.set_title("Sample Data Chart")
+
+        # Save the plot to a BytesIO object
+        img_stream = io.BytesIO()
+        plt.savefig(img_stream, format='png')
+        img_stream.seek(0)
+
+        # Close the plot to free memory
+        plt.close(fig)
+        
+        return img_stream
+
+    # Iterate over slides and shapes to find and replace images, tables, and text boxes by their names
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            # Replace images
+            if shape.shape_type == 13:  # 13 corresponds to picture shapes
+                for image_info in images_to_replace:
+                    if shape.name == image_info['name']:
+                        # Get the position and size of the old image
+                        left = shape.left
+                        top = shape.top
+                        width = shape.width
+                        height = shape.height
+
+                        # Remove the old picture
+                        slide.shapes._spTree.remove(shape._element)
+
+                        # Create the new chart image
+                        chart_image_stream = create_chart_image(image_info['dataframe'])
+
+                        # Add the new chart image with the same name
+                        new_image = slide.shapes.add_picture(chart_image_stream, left, top, width, height)
+                        new_image.name = image_info['name']
+
+                        # Add a text box for the description
+                        text_left = left
+                        text_top = top + height + Inches(0.2)
+                        text_width = width
+                        text_height = Inches(1)
+
+                        text_box = slide.shapes.add_textbox(text_left, text_top, text_width, text_height)
+                        text_frame = text_box.text_frame
+                        p = text_frame.add_paragraph()
+                        p.text = image_info['description']
+                        p.font.size = Pt(14)
+
+            # Replace tables
+            elif shape.shape_type == 19:  # 19 corresponds to table shapes
+                for table_info in tables_to_replace:
+                    if shape.name == table_info['name']:
+                        table = shape.table
+                        dataframe = table_info['dataframe']
+
+                        # Clear the existing table contents
+                        for row in table.rows:
+                            for cell in row.cells:
+                                cell.text = ''
+
+                        # Fill the table with new data
+                        for i, row in dataframe.iterrows():
+                            for j, value in enumerate(row):
+                                table.cell(i+1, j).text = str(value)  # +1 to skip header row
+
+                        # Update the header row
+                        for j, column in enumerate(dataframe.columns):
+                            table.cell(0, j).text = column
+
+            # Replace text boxes
+            elif shape.has_text_frame:
+                for text_info in text_boxes_to_replace:
+                    if shape.name == text_info['name']:
+                        text_frame = shape.text_frame
+                        for paragraph in text_frame.paragraphs:
+                            paragraph.text = text_info['new_text']
+
+    # Save the updated presentation
+    prs.save(output_pptx_path)
+
+    # Convert the updated presentation to PDF using comtypes
+    powerpoint = comtypes.client.CreateObject("PowerPoint.Application")
+    powerpoint.Visible = 1
+    presentation = powerpoint.Presentations.Open(output_pptx_path)
+    presentation.SaveAs(output_pdf_path, 32)  # 32 is the formatType for PDF
+    presentation.Close()
+    powerpoint.Quit()
+
+# Example usage:
+data1 = {
+    'Category': ['A', 'B', 'C', 'D'],
+    'Values': [10, 20, 30, 40]
+}
+df1 = pd.DataFrame(data1)
+
+data2 = {
+    'Category': ['W', 'X', 'Y', 'Z'],
+    'Values': [15, 25, 35, 45]
+}
+df2 = pd.DataFrame(data2)
+
+images_to_replace = [
+    {
+        'name': 'ReplaceMe1',
+        'dataframe': df1,
+        'description': 'This is the new chart created from the first DataFrame.'
+    },
+    {
+        'name': 'ReplaceMe2',
+        'dataframe': df2,
+        'description': 'This is the new chart created from the second DataFrame.'
+    }
+]
+
+tables_to_replace = [
+    {
+        'name': 'TableReplaceMe1',
+        'dataframe': df1
+    },
+    {
+        'name': 'TableReplaceMe2',
+        'dataframe': df2
+    }
+]
+
+text_boxes_to_replace = [
+    {
+        'name': 'DateTextBox1',
+        'new_text': '2024-07-27'
+    },
+    {
+        'name': 'DateTextBox2',
+        'new_text': '2024-07-27'
+    }
+]
+
+# Paths
+pptx_path = 'existing_presentation.pptx'
+output_pptx_path = 'updated_presentation.pptx'
+output_pdf_path = 'updated_presentation.pdf'
+
+# Update the presentation and save as PDF
+update_presentation(pptx_path, output_pptx_path, output_pdf_path, images_to_replace, tables_to_replace, text_boxes_to_replace)
+
+
+
+
+
+
+
+##############
+
+from pptx import Presentation
+from pptx.util import Inches, Pt
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
 from pptx2pdf import convert
 import os
 
