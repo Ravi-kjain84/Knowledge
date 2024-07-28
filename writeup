@@ -1,3 +1,115 @@
+import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+from openpyxl.utils.dataframe import dataframe_to_rows
+
+def write_df_to_excel(df, file_path, sheet_name='Sheet1'):
+    """
+    Writes a Pandas DataFrame to an Excel file.
+
+    Parameters:
+        df (pd.DataFrame): The DataFrame to write.
+        file_path (str): The path to the Excel file.
+        sheet_name (str): The name of the sheet to write the DataFrame to.
+
+    Returns:
+        None
+    """
+    df.to_excel(file_path, index=False, sheet_name=sheet_name)
+
+def adjust_column_widths(ws):
+    """
+    Adjusts the column widths of the worksheet based on the length of the longest value in each column.
+
+    Parameters:
+        ws (Worksheet): The worksheet to adjust column widths for.
+
+    Returns:
+        None
+    """
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter  # Get the column name
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+def apply_conditional_formatting(ws):
+    """
+    Applies conditional formatting to the worksheet.
+
+    Parameters:
+        ws (Worksheet): The worksheet to apply conditional formatting to.
+
+    Returns:
+        None
+    """
+    # Example: Apply a yellow fill to column 'A' if value is greater than 2
+    yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+
+    for cell in ws['A']:
+        if cell.row == 1:  # Skip the header row
+            continue
+        if cell.value > 2:
+            cell.fill = yellow_fill
+
+def process_all_sheets(file_path):
+    """
+    Processes all worksheets in the given Excel file, adjusting column widths and applying conditional formatting.
+
+    Parameters:
+        file_path (str): The path to the Excel file.
+
+    Returns:
+        None
+    """
+    # Load the workbook
+    wb = load_workbook(file_path)
+    
+    # Iterate through all worksheets in the workbook
+    for ws in wb.worksheets:
+        # Adjust column widths
+        adjust_column_widths(ws)
+        # Apply conditional formatting
+        apply_conditional_formatting(ws)
+    
+    # Save the workbook
+    wb.save(file_path)
+
+def main():
+    # Create a sample DataFrame
+    data = {
+        'A': [1, 2, 3, 4],
+        'B': [5, 6, 7, 8],
+        'C': [9, 10, 11, 12]
+    }
+    df = pd.DataFrame(data)
+
+    # Define the file path
+    file_path = 'output.xlsx'
+
+    # Write the DataFrame to an Excel file
+    write_df_to_excel(df, file_path)
+
+    # Process all sheets in the workbook
+    process_all_sheets(file_path)
+
+    print("DataFrame written to Excel with adjusted column widths and conditional formatting applied to all worksheets.")
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+-----
+
 from pptx import Presentation
 from pptx.util import Inches, Pt
 import pandas as pd
