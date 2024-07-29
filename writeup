@@ -1,3 +1,36 @@
+
+from pptx import Presentation
+from pptx.util import Pt
+from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN
+
+# Load the existing presentation
+prs = Presentation('your_presentation.pptx')
+
+# Access the slide containing the table
+slide = prs.slides[0]  # Adjust index to the slide with your table
+
+# Access the table (assuming it's the first table on the slide)
+table = slide.shapes[0].table
+
+# Specify the column index you want to align (0-based index)
+column_index = 0  # Change to the desired column index
+
+# Iterate through the rows and access the cell in the specified column
+for row in table.rows:
+    cell = row.cells[column_index]
+    
+    # Align text to the center
+    for paragraph in cell.text_frame.paragraphs:
+        paragraph.alignment = PP_ALIGN.CENTER  # Center alignment
+
+# Save the presentation with the updated table
+prs.save('updated_presentation.pptx')
+
+
+
+----///------///-----
+
 from pptx.enum.text import PP_ALIGN
 
 for cell in table.columns[0].cells:
