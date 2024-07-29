@@ -1,3 +1,39 @@
+from pptx import Presentation
+from pptx.util import Pt
+from pptx.dml.color import RGBColor
+
+# Load the existing presentation
+prs = Presentation('your_presentation.pptx')
+
+# Access the slide containing the table
+slide = prs.slides[0]  # Adjust index to the slide with your table
+
+# Access the table (assuming it's the first table on the slide)
+table = slide.shapes[0].table
+
+# Modify font properties for each cell
+for row in table.rows:
+    for cell in row.cells:
+        for paragraph in cell.text_frame.paragraphs:
+            for run in paragraph.runs:
+                run.font.size = Pt(12)  # Set font size
+                run.font.bold = True  # Make text bold
+                run.font.italic = False  # Make text italic
+                run.font.color.rgb = RGBColor(0, 0, 255)  # Set font color (blue)
+
+# Save the presentation with the updated table
+prs.save('updated_presentation.pptx')
+
+
+
+
+
+
+
+
+
+-/:-::-/:::///////
+
 import pandas as pd
 from pptx import Presentation
 from pptx.util import Inches
