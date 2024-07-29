@@ -1,4 +1,60 @@
 import pandas as pd
+from pptx import Presentation
+from pptx.util import Inches
+import win32com.client
+
+# Define the path to your PowerPoint file and the chart data
+ppt_file_path = 'path/to/your/presentation.pptx'
+new_data = {
+    'Category': ['A', 'B', 'C', 'D'],
+    'Value': [10, 20, 30, 40]
+}
+df = pd.DataFrame(new_data)
+
+def update_chart_data(ppt_file_path, df):
+    # Open the PowerPoint file using win32com
+    Application = win32com.client.Dispatch("PowerPoint.Application")
+    Presentation = Application.Presentations.Open(ppt_file_path, ReadOnly=False)
+
+    # Iterate through slides and shapes to find the chart
+    for slide in Presentation.Slides:
+        for shape in slide.Shapes:
+            if shape.HasChart:
+                chart = shape.Chart
+                # Update chart data
+                chart.ChartData.Activate()
+                workbook = chart.ChartData.Workbook
+                worksheet = workbook.Worksheets(1)
+
+                # Clear existing data
+                worksheet.Cells.Clear()
+
+                # Write new data
+                worksheet.Cells(1, 1).Value = "Category"
+                worksheet.Cells(1, 2).Value = "Value"
+                for i, (index, row) in enumerate(df.iterrows(), start=2):
+                    worksheet.Cells(i, 1).Value = row['Category']
+                    worksheet.Cells(i, 2).Value = row['Value']
+
+                # Refresh the chart
+                chart.Refresh()
+    
+    # Save and close the presentation
+    Presentation.Save()
+    Presentation.Close()
+    Application.Quit()
+
+update_chart_data(ppt_file_path, df)
+
+print("Chart data updated in PowerPoint presentation.")
+
+
+
+
+
+-------
+
+import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
