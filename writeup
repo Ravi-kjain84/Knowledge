@@ -1,3 +1,94 @@
+import pandas as pd
+import win32com.client
+import psutil
+
+# Define the path to your PowerPoint file
+ppt_file_path = 'path/to/your/presentation.pptx'
+
+# Define the data frames corresponding to each chart
+data_frames = {
+    'Chart1': pd.DataFrame({
+        'Category': ['A', 'B', 'C', 'D'],
+        'Value': [10, 20, 30, 40]
+    }),
+    'Chart2': pd.DataFrame({
+        'Category': ['W', 'X', 'Y', 'Z'],
+        'Value': [15, 25, 35, 45]
+    })
+    # Add more DataFrames as needed
+}
+
+def get_excel_processes():
+    """Returns a list of PIDs for all running Excel processes."""
+    return [p.pid for p in psutil.process_iter(['name']) if p.info['name'] == 'EXCEL.EXE']
+
+def update_chart_data(ppt_file_path, data_frames):
+    # Get the list of Excel processes before running the script
+    pre_existing_excel_pids = get_excel_processes()
+
+    # Open the PowerPoint file using win32com
+    Application = win32com.client.Dispatch("PowerPoint.Application")
+    Presentation = Application.Presentations.Open(ppt_file_path, ReadOnly=False)
+
+    # Iterate through slides and shapes to find the charts
+    for slide in Presentation.Slides:
+        for shape in slide.Shapes:
+            if shape.HasChart:
+                chart = shape.Chart
+                chart_name = shape.Name
+
+                # Check if the chart's name corresponds to a DataFrame in the data_frames dictionary
+                if chart_name in data_frames:
+                    df = data_frames[chart_name]
+
+                    # Update chart data
+                    chart.ChartData.Activate()
+                    workbook = chart.ChartData.Workbook
+                    worksheet = workbook.Worksheets(1)
+
+                    # Clear existing data
+                    worksheet.Cells.Clear()
+
+                    # Write new data
+                    worksheet.Cells(1, 1).Value = "Category"
+                    worksheet.Cells(1, 2).Value = "Value"
+                    for i, (index, row) in enumerate(df.iterrows(), start=2):
+                        worksheet.Cells(i, 1).Value = row['Category']
+                        worksheet.Cells(i, 2).Value = row['Value']
+
+                    # Refresh the chart
+                    chart.Refresh()
+
+    # Save and close the presentation
+    Presentation.Save()
+    Presentation.Close()
+    Application.Quit()
+
+    # Get the list of Excel processes after running the script
+    post_existing_excel_pids = get_excel_processes()
+
+    # Find new Excel processes that were started by the script
+    new_excel_pids = set(post_existing_excel_pids) - set(pre_existing_excel_pids)
+
+    # Terminate new Excel processes
+    for pid in new_excel_pids:
+        p = psutil.Process(pid)
+        p.terminate()
+        p.wait()
+
+update_chart_data(ppt_file_path, data_frames)
+
+print("Charts updated in PowerPoint presentation and new Excel processes closed.")
+
+
+
+
+
+
+
+
+-------------------------------------
+
 
 from pptx import Presentation
 from pptx.util import Pt
