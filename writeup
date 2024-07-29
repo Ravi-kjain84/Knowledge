@@ -1,3 +1,25 @@
+
+run.font.name = 'Arial'
+
+from pptx.dml.color import RGBColor
+
+for row in table.rows:
+    for cell in row.cells:
+        cell.fill.solid()
+        cell.fill.fore_color.rgb = RGBColor(255, 255, 0)  # Yellow background
+
+
+run.font.underline = True
+
+
+from pptx.dml.color import RGBColor
+
+for row in table.rows:
+    for cell in row.cells:
+        cell.fill.solid()
+        cell.fill.fore_color.rgb = RGBColor(255, 255, 0)  # Yellow background
+-----
+
 from pptx import Presentation
 from pptx.util import Pt
 from pptx.dml.color import RGBColor
