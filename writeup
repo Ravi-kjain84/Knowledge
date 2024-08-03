@@ -1,3 +1,43 @@
+def missing_transaction_mapping(self):
+
+    # Create a list to store the unmatched values
+    unmatched_values_list = []
+
+    # Get the unique country value from the final_df_engine
+    unique_country = self.final_df_engine['country'].unique()
+    if len(unique_country) == 1:
+        country_name = unique_country[0]
+    else:
+        # Handle the case where there are multiple unique countries, if needed
+        country_name = 'Multiple'
+
+    # Merge main_df with each mapping DataFrame and track unmatched values
+    for name, mapping_df, keys in self.missing_mapping:
+        main_keys = keys['main']
+        map_keys = keys['map']
+
+        # Ensure the country column is included in the merged DataFrame
+        merged_df = self.final_df_engine.merge(mapping_df, how='left', left_on=main_keys, right_on=map_keys, indicator=True)
+
+        # Identify the rows in main_df that don't have matching rows in the mapping DataFrame
+        unmatched = merged_df[merged_df['_merge'] == 'left_only'][main_keys]
+        
+        for value in unmatched.itertuples(index=False, name=None):
+            unmatched_values_list.append((name, country_name, *value, ','.join(map(str, value))))
+
+    # Create a DataFrame from the unmatched values list
+    self.unmatched_values_df = pd.DataFrame(unmatched_values_list, columns=['DataFrame', 'Country', 'Key Column', 'Missing Value'])
+    # self.unmatched_values_df['Missing Value'] = self.unmatched_values_df['Missing Value'].replace(['', None])
+    # self.unmatched_values_df = self.unmatched_values_df[self.unmatched_values_df['Missing Value'].str.contains('NA', na=False)]
+    # self.unmatched_values_df['Missing Value'] = self.unmatched_values_df['Missing Value'] != ''
+    # self.unmatched_values_df['Missing Value'] = self.unmatched_values_df['Missing Value'] != None
+    # self.unmatched_values_df = self.unmatched_values_df[self.unmatched_values_df['Missing Value'].str.contains('ICP None', na=False)]
+    # self.unmatched_values_df = self.unmatched_values_df.drop_duplicates()
+
+-------
+
+
+
 import pandas as pd
 import win32com.client
 import psutil
