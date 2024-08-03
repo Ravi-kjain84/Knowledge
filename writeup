@@ -1,3 +1,64 @@
+import pandas as pd
+
+def process_unmatched_values(df):
+    unmatched_values_list = []
+    
+    # Get the unique country names
+    unique_countries = df['Country'].unique()
+    
+    for country in unique_countries:
+        # Filter the DataFrame for the current country
+        country_df = df[df['Country'] == country]
+        
+        # Add your existing logic here to create unmatched values
+        # This part is based on your original code
+        
+        # Assuming mapping_df and keys are defined outside this function
+        for map_ in mapping_df.keys():
+            map_keys = keys['main']
+            
+            merged_df = country_df.merge(mapping_df[map_], how='left', left_on=map_keys, right_on=map_keys, indicator=True)
+            
+            # Identify the rows in country_df that don't have matches in the mapping DataFrame
+            unmatched = merged_df[merged_df['_merge'] == 'left_only'][map_keys]
+            for value in unmatched.itertuples(index=False, name=None):
+                unmatched_values_list.append({
+                    'Dataframe': map_,
+                    'Key Column': ', '.join(map(str, map_keys)),
+                    'Missing Value': ', '.join(map(str, value)),
+                    'Country': country
+                })
+    
+    # Create a DataFrame from the unmatched values list
+    unmatched_values_df = pd.DataFrame(unmatched_values_list, columns=['Dataframe', 'Key Column', 'Missing Value', 'Country'])
+    
+    # Remove duplicate rows based on 'Dataframe', 'Key Column', and 'Missing Value', but combine 'Country' values
+    unmatched_values_df = unmatched_values_df.groupby(['Dataframe', 'Key Column', 'Missing Value']).agg({
+        'Country': lambda x: ', '.join(sorted(set(x)))
+    }).reset_index()
+    
+    return unmatched_values_df
+
+# Example usage:
+# df is your input DataFrame
+unmatched_values_df = process_unmatched_values(df)
+
+# If you need to run this function multiple times and append the results, you can do:
+final_unmatched_values_df = pd.DataFrame()
+for df in list_of_dataframes:  # Assuming you have a list of DataFrames to process
+    result_df = process_unmatched_values(df)
+    final_unmatched_values_df = pd.concat([final_unmatched_values_df, result_df], ignore_index=True)
+
+# Now final_unmatched_values_df contains the combined results
+
+
+
+
+
+
+
+---------
+
 def missing_transaction_mapping(self):
 
     # Create a list to store the unmatched values
