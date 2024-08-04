@@ -1,5 +1,71 @@
 import pandas as pd
 
+# Sample data creation
+data_july = {
+    'date': ['2023-07-31']*5,
+    'country': ['US', 'US', 'IN', 'IN', 'UK'],
+    'account': ['A1', 'A2', 'B1', 'B2', 'C1'],
+    'amount': [100, 150, 200, 250, 300],
+    'other1': ['x1', 'x2', 'x3', 'x4', 'x5'],
+    'other2': ['y1', 'y2', 'y3', 'y4', 'y5']
+}
+
+data_august = {
+    'date': ['2023-08-31']*5,
+    'country': ['US', 'US', 'IN', 'IN', 'UK'],
+    'account': ['A1', 'A2', 'B1', 'B2', 'C1'],
+    'amount': [110, 160, 210, 260, 310],
+    'other1': ['x6', 'x7', 'x8', 'x9', 'x10'],
+    'other2': ['y6', 'y7', 'y8', 'y9', 'y10']
+}
+
+df1 = pd.DataFrame(data_july)
+df2 = pd.DataFrame(data_august)
+
+# Convert all columns to string type
+df1 = df1.astype(str)
+df2 = df2.astype(str)
+
+# Convert 'amount' column back to float for aggregation purposes
+df1['amount'] = df1['amount'].astype(float)
+df2['amount'] = df2['amount'].astype(float)
+
+# Summarize amount by country for both dataframes
+sum_country_july = df1.groupby('country')['amount'].sum().reset_index()
+sum_country_august = df2.groupby('country')['amount'].sum().reset_index()
+
+# Merge the summarized dataframes on 'country'
+result_country = pd.merge(sum_country_july, sum_country_august, on='country', suffixes=('_previous', '_current'))
+
+# Summarize amount by country and account for both dataframes
+sum_country_account_july = df1.groupby(['country', 'account'])['amount'].sum().reset_index()
+sum_country_account_august = df2.groupby(['country', 'account'])['amount'].sum().reset_index()
+
+# Merge the summarized dataframes on 'country' and 'account'
+result_country_account = pd.merge(sum_country_account_july, sum_country_account_august, on=['country', 'account'], suffixes=('_previous', '_current'))
+
+# Summarize amount by account for both dataframes
+sum_account_july = df1.groupby('account')['amount'].sum().reset_index()
+sum_account_august = df2.groupby('account')['amount'].sum().reset_index()
+
+# Merge the summarized dataframes on 'account'
+result_account = pd.merge(sum_account_july, sum_account_august, on='account', suffixes=('_previous', '_current'))
+
+# Display results
+print("Summarized amount by country:")
+print(result_country)
+print("\nSummarized amount by country and account:")
+print(result_country_account)
+print("\nSummarized amount by account:")
+print(result_account)
+
+
+
+
+---------
+
+import pandas as pd
+
 def process_unmatched_values(df):
     unmatched_values_list = []
     
