@@ -1,5 +1,56 @@
 import pandas as pd
 
+# Assuming df1 is for July and df2 is for August
+# Example dataframes
+# df1 = pd.read_csv('path_to_july_data.csv')
+# df2 = pd.read_csv('path_to_august_data.csv')
+
+# Sample data creation (remove this part if you are reading from CSV)
+data_july = {
+    'date': ['2023-07-31']*5,
+    'col1': ['A', 'B', 'A', 'C', 'D'],
+    'col2': ['X', 'Y', 'X', 'Z', 'Y'],
+    'amount': [100, 150, 200, 250, 300]
+}
+
+data_august = {
+    'date': ['2023-08-31']*5,
+    'col1': ['A', 'B', 'E', 'C', 'F'],
+    'col2': ['X', 'Y', 'W', 'Z', 'V'],
+    'amount': [110, 160, 210, 260, 310]
+}
+
+df1 = pd.DataFrame(data_july)
+df2 = pd.DataFrame(data_august)
+
+# Convert all columns to string type
+df1 = df1.astype(str)
+df2 = df2.astype(str)
+
+# List of columns excluding 'amount'
+columns_to_check = [col for col in df1.columns if col != 'amount']
+
+# Create an empty result dataframe
+result_df = pd.DataFrame(columns=['Column', 'Current Distinct Count', 'Previous Distinct Count'])
+
+# Calculate distinct counts for each column
+for col in columns_to_check:
+    current_count = df2[col].nunique()
+    previous_count = df1[col].nunique()
+    result_df = result_df.append({'Column': col, 'Current Distinct Count': current_count, 'Previous Distinct Count': previous_count}, ignore_index=True)
+
+# Display the result
+print(result_df)
+
+
+
+
+
+-------
+
+
+import pandas as pd
+
 # Sample data creation
 data_july = {
     'date': ['2023-07-31']*5,
