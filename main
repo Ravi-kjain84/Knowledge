@@ -1,3 +1,11 @@
+Skill,Description,Suggested Books
+Strategic Thinking,Ability to develop long-term visions, plan strategically, and align the organization’s direction with its goals.,- “Good Strategy Bad Strategy” by Richard Rumelt  - “The Art of Strategy” by Avinash K. Dixit and Barry J. Nalebuff
+Leadership and Team Management,Effective leadership qualities including inspiring teams, managing diverse groups, and fostering a collaborative work environment.,- “Leaders Eat Last” by Simon Sinek  - “The Five Dysfunctions of a Team” by Patrick Lencioni
+Financial Acumen,Strong understanding of financial principles, banking operations, and the ability to make informed financial decisions.,- “Principles of Corporate Finance” by Richard A. Brealey, Stewart C. Myers, and Franklin Allen
+Regulatory Knowledge,Awareness of the regulatory environment affecting the banking industry, including compliance, risk management, and governance.,- “Financial Regulation: Law and Policy” by Michael S. Barr, Howell E. Jackson, and Margaret E. Tahyar
+Change Management,Ability to manage and lead organizational change, ensuring smooth transitions and effective implementation of new initiatives.,- “Leading Change” by John P. Kotter  - “Switch: How to Change Things When Change Is Hard” by Chip Heath and Dan Heath
+
+
 import pandas as pd
 
 # Sample DataFrame
