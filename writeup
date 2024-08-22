@@ -1,5 +1,22 @@
 import pandas as pd
 
+# Assuming your DataFrame is named df
+
+# Convert all columns to string, except for the 'amount' column
+df = df.applymap(lambda x: str(x) if isinstance(x, (int, float, bool, object)) else x)
+
+# Ensure that the 'amount' column remains unchanged
+df['amount'] = df['amount'].astype(float)
+
+# Display the DataFrame to verify the changes
+print(df.dtypes)
+
+----
+
+
+
+import pandas as pd
+
 # Assuming df1 is for July and df2 is for August
 # Example dataframes
 # df1 = pd.read_csv('path_to_july_data.csv')
