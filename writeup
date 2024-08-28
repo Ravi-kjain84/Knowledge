@@ -1,4 +1,50 @@
 import pandas as pd
+import numpy as np
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill
+
+# Assuming df1 and df2 are your two DataFrames
+# Concatenate all columns into one column for both DataFrames
+df1['combined'] = df1.astype(str).agg(' | '.join, axis=1)
+df2['combined'] = df2.astype(str).agg(' | '.join, axis=1)
+
+# Compare the combined columns row by row
+df1['match'] = df1['combined'] == df2['combined']
+
+# Add a new column to indicate rows that do not match
+df1['comparison_result'] = np.where(df1['match'], 'Matched', 'Not Matched')
+
+# Drop the combined and match columns before export
+df1 = df1.drop(columns=['combined', 'match'])
+
+# Function to highlight cells in red where there is a mismatch
+def highlight_unmatched(s, df2_row):
+    return ['background-color: red' if s.iloc[i] != df2_row.iloc[i] else '' for i in range(len(s))]
+
+# Apply the highlighting function to each row
+highlighted_df = df1.style.apply(lambda s: highlight_unmatched(s, df2.loc[s.name]), axis=1)
+
+# Write the output to an Excel file
+output_path = 'comparison_output.xlsx'
+with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+    highlighted_df.to_excel(writer, sheet_name='Comparison', index=False)
+
+# Load the workbook and adjust the formatting for the new column
+wb = Workbook()
+ws = wb.active
+
+# Open the existing Excel file to modify it
+from openpyxl import load_workbook
+wb = load_workbook(output_path)
+ws = wb.active
+
+# Save the modified workbook
+wb.save(output_path)
+
+
+-------
+
+import pandas as pd
 
 # Sample data for DataFrame 1 (df1) and DataFrame 2 (df2)
 # Assuming you have already loaded df1 and df2
