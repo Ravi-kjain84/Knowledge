@@ -1,3 +1,44 @@
+def ensure_column_exists(df, column_name, default_value=0):
+    if column_name not in df.columns:
+        df[column_name] = default_value  # Add the missing column with the default value
+    return df
+
+def write_output(self):
+    # Ensure the output folder exists
+    try:
+        app = xw.App(visible=False)
+        workbook = app.books.open('output/Singapore/output.xlsx')
+        
+        # Ensure the missing column is in df_control_01 and final_upload_df
+        missing_column = 'YourMissingColumnName'
+        self.df_control_01 = ensure_column_exists(self.df_control_01, missing_column)
+        self.final_upload_df = ensure_column_exists(self.final_upload_df, missing_column)
+        
+        # Clear the contents of the 'df_control_01' sheet
+        sheet1 = workbook.sheets['df_control_01']
+        sheet1.clear()
+        
+        # Write data to 'df_control_01'
+        sheet1.range('A1').value = self.df_control_01.columns.tolist()
+        sheet1.range('A2').value = self.df_control_01.values.tolist()
+        
+        # Clear the contents of the 'final_upload_df' sheet
+        sheet2 = workbook.sheets['final_upload_df']
+        sheet2.clear()
+        
+        # Write data to 'final_upload_df'
+        sheet2.range('A1').value = self.final_upload_df.columns.tolist()
+        sheet2.range('A2').value = self.final_upload_df.values.tolist()
+        
+        workbook.save()
+        workbook.close()
+
+    finally:
+        app.kill()
+
+----
+
+
 import pandas as pd
 import numpy as np
 from openpyxl import Workbook
