@@ -1,4 +1,44 @@
 
+import subprocess
+import os
+from tkinter import messagebox
+
+def run_process1(self):
+    if not python_file:
+        messagebox.showerror("Error", "Please select a Python file for {PROCESS_1_NAME}.")
+        return
+
+    output_folder = filedialog.askdirectory(title="Select Output Folder for {PROCESS_1_NAME}")
+    if not output_folder:
+        messagebox.showerror("Error", f"Please select an output folder for {PROCESS_1_NAME}.")
+        return
+
+    try:
+        # Convert paths to absolute paths
+        python_file_abs = os.path.abspath(python_file)
+        output_folder_abs = os.path.abspath(output_folder)
+        filepath1_current_abs = os.path.abspath(self.filepath1_current)
+
+        # Run the selected Python file with the absolute paths
+        result = subprocess.run(
+            [sys.executable, python_file_abs, filepath1_current_abs, output_folder_abs],
+            capture_output=True,  # Capture the output
+            text=True  # Return the output as a string instead of bytes
+        )
+
+        # Check for errors and display the output
+        if result.returncode == 0:
+            messagebox.showinfo("Success", f"{PROCESS_1_NAME} completed successfully. Output saved in {output_folder_abs}.")
+            messagebox.showinfo("Output", f"Script Output:\n{result.stdout}")
+        else:
+            messagebox.showerror("Error", f"An error occurred during {PROCESS_1_NAME} execution.\nError:\n{result.stderr}")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred during {PROCESS_1_NAME} execution: {e}")
+
+
+
+-----
 import os
 import pandas as pd
 
