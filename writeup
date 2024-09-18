@@ -1,3 +1,49 @@
+
+import os
+import pandas as pd
+
+def run_for_each_folder(data_folder, output_folder):
+    """
+    Function to process data in the 'data_folder' and store output in 'output_folder'.
+    Reads input and mapping files in .xlsx format, merges based on two columns, 
+    and saves the final DataFrame to an .xlsx file.
+    """
+
+    # Define paths for input and mapping files
+    input_file_path = os.path.join(data_folder, 'input', 'input01.xlsx')  # Assuming Excel format
+    mapping_file_path = os.path.join(data_folder, 'mapping', 'mapping1.xlsx')  # Assuming Excel format
+    output_file_path = os.path.join(output_folder, 'output01.xlsx')
+
+    # Check if necessary folders and files exist
+    if os.path.exists(input_file_path) and os.path.exists(mapping_file_path):
+        print(f"Processing data in: {data_folder}")
+        print(f"Storing results in: {output_folder}")
+
+        # Read the input and mapping files into DataFrames (first sheet is read by default)
+        input_df = pd.read_excel(input_file_path)
+        mapping_df = pd.read_excel(mapping_file_path)
+
+        # Merge the dataframes based on common columns (replace 'common_col1' and 'common_col2' with actual column names)
+        merged_df = pd.merge(input_df, mapping_df, left_on=['common_col1', 'common_col2'], right_on=['common_col1', 'common_col2'])
+
+        # Select the columns you want from the mapping file (replace 'mapping_col1' and 'mapping_col2' with actual column names)
+        final_df = merged_df[['column_from_input1', 'column_from_input2', 'mapping_col1', 'mapping_col2']]
+
+        # Save the final DataFrame to the output folder as an Excel file
+        final_df.to_excel(output_file_path, index=False)
+        print(f"Successfully processed data and saved output to {output_file_path}.")
+    else:
+        print("Either input or mapping file doesn't exist.")
+
+# Example usage
+data_folder = '/path/to/data_folder'  # Replace with actual path
+output_folder = '/path/to/output_folder'  # Replace with actual path
+run_for_each_folder(data_folder, output_folder)
+
+
+
+-------------
+
 def ensure_column_exists(df, column_name, default_value=0):
     if column_name not in df.columns:
         df[column_name] = default_value  # Add the missing column with the default value
