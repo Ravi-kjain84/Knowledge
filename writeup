@@ -1,4 +1,57 @@
+def parse_formula(self, formula_logic, df, dependencies, data_type):
+    # Mapping for operators
+    ops = {
+        '+': operator.add,
+        '-': operator.sub,
+        '*': operator.mul,
+        '/': operator.truediv,
+    }
 
+    # Convert the formula logic to lowercase for case-insensitivity
+    formula_logic_lower = formula_logic.lower()
+
+    # Check if the formula contains an operator
+    for op_symbol, op_func in ops.items():
+        if op_symbol in formula_logic_lower:
+            # Split the formula by the operator to get the operands
+            operands = formula_logic.split(op_symbol)
+            operand1 = operands[0].strip()
+            operand2 = operands[1].strip()
+
+            # Check if operand1 is a column in the dataframe or a literal value
+            if operand1 in df.columns:
+                operand1_value = df[operand1]
+            else:
+                try:
+                    operand1_value = float(operand1)  # Convert literal to float or appropriate type
+                except ValueError:
+                    raise ValueError(f"Invalid value for operand1: {operand1}")
+
+            # Check if operand2 is a column in the dataframe or a literal value
+            if operand2 in df.columns:
+                operand2_value = df[operand2]
+            else:
+                try:
+                    operand2_value = float(operand2)  # Convert literal to float or appropriate type
+                except ValueError:
+                    raise ValueError(f"Invalid value for operand2: {operand2}")
+
+            # Apply the operator function
+            result = op_func(operand1_value, operand2_value)
+
+            # Return the result, cast to the correct type if necessary
+            if data_type == 'float':
+                return result.astype(float)
+            elif data_type == 'int':
+                return result.astype(int)
+            else:
+                return result.astype(object)
+
+    # Handle other cases like 'if-then-else' or 'astype' (as per your existing logic)
+    # ... (existing logic for other cases)
+
+
+----
 import subprocess
 import os
 from tkinter import messagebox
