@@ -1,3 +1,16 @@
+
+Here’s a concise version of the challenges you’ve mentioned, formatted as bullet points:
+
+	•	Controls and validations misaligned with business requirements; false positives.
+	•	Information lacks flexibility; requires redesigning in Excel for presentations.
+	•	Solutions are non-standard and rarely reused across regions.
+	•	Long waiting time; overbooked change delivery team; need self-service platform.
+	•	Solutions not future-proof; frequent redesigns due to changing requirements.
+	•	Difficult to access granular data; increases analysis time during reporting peaks.
+
+These bullet points maintain clarity and brevity, as requested.
+-----
+
 The benefits include supporting operational efficiency, cost discipline, and regulatory excellence through reduced cloud consumption, data acquisition costs, and manual data repair efforts. Enablers such as alternate storage technologies, data refineries, and automation of processes will streamline access and management of data, reduce testing and environment management costs, and improve user accessibility. These improvements result in better governance, quicker change delivery, and more efficient data handling across technology, RTB, MTB, and finance operations costs.
 -----
 def parse_formula(self, formula_logic, df, dependencies, data_type):
