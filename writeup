@@ -1,3 +1,23 @@
+
+import re
+
+# Function to remove the extension between '.' and the first '_', but keep everything after the '_'
+def remove_extension(filename):
+    return re.sub(r'\.[^.]+(?=_|$)', '', filename)
+
+# Apply the function to your DataFrame
+df['source_data'] = df['source_data'].apply(remove_extension)
+
+# Example usage with 'source_system' column
+# df['source_system'] = df['source_system'].apply(remove_extension)
+
+# View the updated DataFrame
+print(df)
+
+===6#####
+
+
+
 import re
 
 # Function to remove anything between '.' and '_' or just the extension if no '_'
