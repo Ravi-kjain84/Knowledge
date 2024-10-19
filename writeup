@@ -1,4 +1,27 @@
+import pandas as pd
+import re
 
+# Sample DataFrame
+df = pd.DataFrame({
+    'source_data': [
+        'REMIN Standardization Report.xlsx_DERIVATIVES',
+        'Report.csv_SHEET1',
+        'Example.xlsm_SHEET2'
+    ]
+})
+
+# Function to remove anything between '.' and '_'
+def remove_extension(filename):
+    return re.sub(r'\.[^.]+_', '_', filename)
+
+# Apply the function to the 'source_data' column
+df['source_data'] = df['source_data'].apply(remove_extension)
+
+# View the updated DataFrame
+print(df)
+
+
+-------
 Here’s a concise version of the challenges you’ve mentioned, formatted as bullet points:
 
 	•	Controls and validations misaligned with business requirements; false positives.
