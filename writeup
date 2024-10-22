@@ -1,4 +1,41 @@
 
+Here’s a draft based on our discussions for the Testing Center of Excellence (TCOE) with a focus on mission, vision, values, and the unique aspects that would attract and retain talent:
+
+Why people join TCOE and stay
+
+To fulfill our purpose, we need the best minds, constantly innovating and collaborating. Our TCOE team focuses on creating impactful solutions and fostering growth opportunities. Here’s what you can expect when you join our team:
+
+Your opportunities
+
+You’ll contribute to transformative work that drives progress:
+
+	•	You’ll help deliver innovation. Through leading-edge technologies and methodologies, you will shape the future of finance testing and compliance, making an impact across regulatory, risk, and reporting processes.
+	•	You’ll lead change. Be part of a dynamic environment where change is driven by creativity, problem-solving, and the passion to innovate, shaping the future of testing and automation in finance.
+	•	You’ll enhance operational excellence. Your contributions will be key to streamlining processes, automating repetitive tasks, and ensuring the highest levels of accuracy and compliance, helping us build a robust, scalable testing framework.
+
+Our values
+
+Aligned with our vision to lead in excellence, we embrace the following core values:
+
+	•	Innovate to Automate: Aspire to automate and standardize test cases, making every process efficient, consistent, and less reliant on manual intervention.
+	•	Insightful Controls: Implement and maintain forward-thinking controls that ensure robust governance, compliance, and accountability in everything we do.
+	•	Collaboration at the Core: Working across diverse teams and leveraging cloud capabilities for scalable testing, ensuring we deliver quality and consistency for all stakeholders.
+	•	Learning and Development: We believe in fostering a learning environment where everyone can grow through mentorship, access to cutting-edge technologies, and opportunities to contribute to high-impact projects.
+
+Our commitments to you
+
+In return, we’ll reward the difference you make and support your growth:
+
+	•	Rewarding excellence: You’ll be recognized for your contributions, supported by competitive compensation and development opportunities.
+	•	We’ll support your growth: You’ll have access to a wide range of resources to enhance your skills in leadership, technology, and strategic thinking.
+	•	Flexible and inclusive: Our team values diversity and flexibility, ensuring that your unique perspective is recognized and leveraged.
+
+This draft reflects the mission, values, and growth opportunities within the TCOE based on our previous discussions. Let me know if there’s anything you’d like to tweak!
+
+.......
+
+
+
 import re
 
 # Function to remove the extension between '.' and the first '_', but keep everything after the '_'
