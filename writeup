@@ -13,6 +13,77 @@ search_function = "getValue"
 if not os.path.exists(temp_folder):
     os.makedirs(temp_folder)
 
+# Copy all files to the temporary folder, keeping the folder structure
+for root, _, files in os.walk(original_folder):
+    for file_name in files:
+        # Check if the file is an Excel file
+        if file_name.endswith('.xlsx') or file_name.endswith('.xlsm'):
+            # Construct full file paths
+            src = os.path.join(root, file_name)
+            
+            # Preserve folder structure in the temporary folder
+            relative_path = os.path.relpath(root, original_folder)
+            dest_dir = os.path.join(temp_folder, relative_path)
+            if not os.path.exists(dest_dir):
+                os.makedirs(dest_dir)
+            dest = os.path.join(dest_dir, file_name)
+            
+            # Copy the file to the corresponding location in the temporary folder
+            shutil.copy(src, dest)
+
+# List to store files containing the function
+files_with_function = []
+
+# Now iterate through the copied files in the temporary folder
+for root, _, files in os.walk(temp_folder):
+    for file_name in files:
+        file_path = os.path.join(root, file_name)
+        
+        # Try opening the workbook, skipping if it's password-protected
+        try:
+            workbook = load_workbook(file_path, data_only=False)  # Load formulas as they are
+        except Exception as e:
+            print(f"Could not open {file_name} due to password protection or other error.")
+            continue
+
+        # Search for the function in each sheet
+        for sheet in workbook.sheetnames:
+            worksheet = workbook[sheet]
+            for row in worksheet.iter_rows():
+                for cell in row:
+                    # Check if the cell has a formula and contains the search function
+                    if cell.data_type == 'f' and search_function in str(cell.value):
+                        files_with_function.append(os.path.relpath(file_path, temp_folder))
+                        break
+                else:
+                    continue
+                break  # Stop further checks for this file if function is found
+        workbook.close()
+
+# Output the results
+if files_with_function:
+    print("The following files contain the function '{}':".format(search_function))
+    for f in files_with_function:
+        print(f)
+else:
+    print("No files containing the function '{}' were found.".format(search_function))
+..==
+
+import os
+import shutil
+from openpyxl import load_workbook
+
+# Define the original and temporary folder paths
+original_folder = 'path/to/original/folder'
+temp_folder = 'path/to/temporary/folder'
+
+# Define the function string to search for
+search_function = "getValue"
+
+# Create a temporary folder to store non-password-protected copies
+if not os.path.exists(temp_folder):
+    os.makedirs(temp_folder)
+
 # Copy all files to the temporary folder
 for file_name in os.listdir(original_folder):
     # Check if the file is an Excel file
