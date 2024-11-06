@@ -7,11 +7,11 @@ from openpyxl import load_workbook
 original_folder = 'path/to/original/folder'
 temp_folder = 'path/to/temporary/folder'
 
-# Define the keyword to search within formulas
-search_keyword = "getValue"
+# Define the list of keywords to search within formulas
+search_keywords = ["getValue", "retrieveData", "calculateTotal"]
 
-# Create a regex pattern to find the function keyword surrounded by optional characters like '(' or space
-pattern = re.compile(rf"\b{re.escape(search_keyword)}\b", re.IGNORECASE)
+# Compile regex patterns for each keyword to find matches in formulas
+patterns = {keyword: re.compile(rf"\b{re.escape(keyword)}\b", re.IGNORECASE) for keyword in search_keywords}
 
 # Create a temporary folder to store non-password-protected copies
 if not os.path.exists(temp_folder):
@@ -42,16 +42,16 @@ for root, _, files in os.walk(original_folder):
             shutil.copy(src, dest)
             print(f"Copied '{file_name}' to temporary folder")
 
-print("File copy process completed. Starting search for keyword...")
+print("File copy process completed. Starting search for keywords...")
 
-# List to store files containing the function with the specific keyword
-files_with_keyword = []
+# Dictionary to store files containing any of the keywords, with the matched keyword(s)
+files_with_keywords = {}
 
 # Now iterate through the copied files in the temporary folder
 for root, _, files in os.walk(temp_folder):
     for file_name in files:
         file_path = os.path.join(root, file_name)
-        print(f"Checking file '{file_name}' for keyword '{search_keyword}'...")
+        print(f"Checking file '{file_name}' for keywords {search_keywords}...")
 
         # Try opening the workbook, skipping if it's password-protected
         try:
@@ -61,192 +61,38 @@ for root, _, files in os.walk(temp_folder):
             print(f"Could not open '{file_name}' due to password protection or other error.")
             continue
 
-        # Search for the keyword in formulas in each sheet
-        found = False
+        # Search for each keyword in formulas in each sheet
+        found_keywords = set()
         for sheet in workbook.sheetnames:
             print(f"Searching in sheet '{sheet}' of '{file_name}'...")
             worksheet = workbook[sheet]
             for row in worksheet.iter_rows():
                 for cell in row:
-                    # Check if the cell has a formula and contains the search keyword based on regex
-                    if cell.data_type == 'f' and pattern.search(str(cell.value)):
-                        files_with_keyword.append(os.path.relpath(file_path, temp_folder))
-                        print(f"Keyword '{search_keyword}' found in '{file_name}' in sheet '{sheet}'")
-                        found = True
-                        break
-                if found:
-                    break
-            if found:
-                break
+                    if cell.data_type == 'f':  # Only check cells with formulas
+                        cell_value = str(cell.value)
+                        # Check each pattern to see if any keyword matches
+                        for keyword, pattern in patterns.items():
+                            if pattern.search(cell_value):
+                                found_keywords.add(keyword)
+                                print(f"Keyword '{keyword}' found in '{file_name}' in sheet '{sheet}'")
+                                break  # Stop checking other keywords for this cell
+                if found_keywords:
+                    break  # Stop further search in this sheet if a keyword is found
+            if found_keywords:
+                break  # Stop further search in this file if a keyword is found
         workbook.close()
+
+        # If any keywords were found, update the results dictionary
+        if found_keywords:
+            files_with_keywords[file_name] = list(found_keywords)
+            print(f"File '{file_name}' updated in the results list with matched keywords: {found_keywords}")
 
 print("Search completed.")
 
 # Output the results
-if files_with_keyword:
-    print(f"\nThe following files contain a formula with the keyword '{search_keyword}':")
-    for f in files_with_keyword:
-        print(f)
+if files_with_keywords:
+    print("\nThe following files contain formulas with the specified keywords:")
+    for file, keywords in files_with_keywords.items():
+        print(f"File: {file} - Matched Keywords: {', '.join(keywords)}")
 else:
-    print(f"No files containing a formula with the keyword '{search_keyword}' were found.")
-
-....
-import os
-import shutil
-import re
-from openpyxl import load_workbook
-
-# Define the original and temporary folder paths
-original_folder = 'path/to/original/folder'
-temp_folder = 'path/to/temporary/folder'
-
-# Define the keyword to search within formulas
-search_keyword = "getValue"
-
-# Create a regex pattern to find the function keyword surrounded by optional characters like '(' or space
-pattern = re.compile(rf"\b{re.escape(search_keyword)}\b", re.IGNORECASE)
-
-# Create a temporary folder to store non-password-protected copies
-if not os.path.exists(temp_folder):
-    os.makedirs(temp_folder)
-
-# Copy all files to the temporary folder, keeping the folder structure
-for root, _, files in os.walk(original_folder):
-    for file_name in files:
-        # Check if the file is an Excel file
-        if file_name.endswith('.xlsx') or file_name.endswith('.xlsm'):
-            # Construct full file paths
-            src = os.path.join(root, file_name)
-            
-            # Preserve folder structure in the temporary folder
-            relative_path = os.path.relpath(root, original_folder)
-            dest_dir = os.path.join(temp_folder, relative_path)
-            if not os.path.exists(dest_dir):
-                os.makedirs(dest_dir)
-            dest = os.path.join(dest_dir, file_name)
-            
-            # Copy the file to the corresponding location in the temporary folder
-            shutil.copy(src, dest)
-
-# List to store files containing the function with the specific keyword
-files_with_keyword = []
-
-# Now iterate through the copied files in the temporary folder
-for root, _, files in os.walk(temp_folder):
-    for file_name in files:
-        file_path = os.path.join(root, file_name)
-        
-        # Try opening the workbook, skipping if it's password-protected
-        try:
-            workbook = load_workbook(file_path, data_only=False)  # Load formulas as they are
-        except Exception as e:
-            print(f"Could not open {file_name} due to password protection or other error.")
-            continue
-
-        # Search for the keyword in formulas in each sheet
-        found = False
-        for sheet in workbook.sheetnames:
-            worksheet = workbook[sheet]
-            for row in worksheet.iter_rows():
-                for cell in row:
-                    # Check if the cell has a formula and contains the search keyword based on regex
-                    if cell.data_type == 'f' and pattern.search(str(cell.value)):
-                        files_with_keyword.append(os.path.relpath(file_path, temp_folder))
-                        found = True
-                        break
-                if found:
-                    break
-            if found:
-                break
-        workbook.close()
-
-# Output the results
-if files_with_keyword:
-    print(f"The following files contain a formula with the keyword '{search_keyword}':")
-    for f in files_with_keyword:
-        print(f)
-else:
-    print(f"No files containing a formula with the keyword '{search_keyword}' were found.")
-
-
-
-
-
-.....
-
-import os
-import shutil
-import re
-from openpyxl import load_workbook
-
-# Define the original and temporary folder paths
-original_folder = 'path/to/original/folder'
-temp_folder = 'path/to/temporary/folder'
-
-# Define the keyword to search within formulas
-search_keyword = "getValue"
-
-# Create a regex pattern to find the function keyword surrounded by optional characters like '(' or space
-pattern = re.compile(rf"\b{re.escape(search_keyword)}\b", re.IGNORECASE)
-
-# Create a temporary folder to store non-password-protected copies
-if not os.path.exists(temp_folder):
-    os.makedirs(temp_folder)
-
-# Copy all files to the temporary folder, keeping the folder structure
-for root, _, files in os.walk(original_folder):
-    for file_name in files:
-        # Check if the file is an Excel file
-        if file_name.endswith('.xlsx') or file_name.endswith('.xlsm'):
-            # Construct full file paths
-            src = os.path.join(root, file_name)
-            
-            # Preserve folder structure in the temporary folder
-            relative_path = os.path.relpath(root, original_folder)
-            dest_dir = os.path.join(temp_folder, relative_path)
-            if not os.path.exists(dest_dir):
-                os.makedirs(dest_dir)
-            dest = os.path.join(dest_dir, file_name)
-            
-            # Copy the file to the corresponding location in the temporary folder
-            shutil.copy(src, dest)
-
-# List to store files containing the function with the specific keyword
-files_with_keyword = []
-
-# Now iterate through the copied files in the temporary folder
-for root, _, files in os.walk(temp_folder):
-    for file_name in files:
-        file_path = os.path.join(root, file_name)
-        
-        # Try opening the workbook, skipping if it's password-protected
-        try:
-            workbook = load_workbook(file_path, data_only=False)  # Load formulas as they are
-        except Exception as e:
-            print(f"Could not open {file_name} due to password protection or other error.")
-            continue
-
-        # Search for the keyword in formulas in each sheet
-        found = False
-        for sheet in workbook.sheetnames:
-            worksheet = workbook[sheet]
-            for row in worksheet.iter_rows():
-                for cell in row:
-                    # Check if the cell has a formula and contains the search keyword based on regex
-                    if cell.data_type == 'f' and pattern.search(str(cell.value)):
-                        files_with_keyword.append(os.path.relpath(file_path, temp_folder))
-                        found = True
-                        break
-                if found:
-                    break
-            if found:
-                break
-        workbook.close()
-
-# Output the results
-if files_with_keyword:
-    print(f"The following files contain a formula with the keyword '{search_keyword}':")
-    for f in files_with_keyword:
-        print(f)
-else:
-    print(f"No files containing a formula with the keyword '{search_keyword}' were found.")
+    print("No files containing the specified keywords were found.")
