@@ -1,3 +1,134 @@
+Here is the updated section incorporating pivoting and unpivoting columns as a complexity parameter:
+
+3.2 Complexity Parameters
+
+The following parameters are used to estimate the complexity of the process:
+	1.	Number of Data Enrichment Files:
+	•	The number of input files used for lookup, filtering, or enrichment.
+	2.	Allocation Rules:
+	•	Whether allocation or proportion logic is required.
+	3.	Aggregation Requirements:
+	•	Steps needed to consolidate data for the final output.
+	4.	Control Requirements:
+	•	Number and type of validations/reconciliations in pre- and post-control books.
+	5.	Mapping Tables:
+	•	The number of mapping tables used for lookups and enrichment.
+	6.	Pivoting and Unpivoting Columns:
+	•	The requirement to pivot or unpivot data columns based on specific categorical columns.
+	•	Time estimation: Each column pivoted or unpivoted will take approximately 15 minutes.
+
+5. Estimation Calculation Table
+
+The updated calculation table, including pivoting/unpivoting complexity, is as follows:
+
+Activity	Unit of Work	Time per Unit (minutes)	Comments
+Column Copying	Per column	10	Simple copy operation.
+Lookup for Enrichment	Per column	20	Includes mapping table lookups.
+Filtering	Per condition	15	Based on specific criteria.
+Allocation	Per rule	25	Allocation or proportion calculations.
+Aggregation for Uploader	Per dataset	40	Includes consolidation steps.
+Reconciliation (Post-Control)	Per control point	30	Data comparison and validation.
+Pivoting/Unpivoting Columns	Per column	15	Based on specific categorical columns.
+
+This update reflects the inclusion of pivoting/unpivoting columns as a distinct complexity parameter, with a clear time estimate. Let me know if you’d like further refinements!
+
+
+
+-----
+
+Estimation Methodology for Solution Development Using Rule and Control Books
+
+Abstract
+
+The purpose of this paper is to develop a structured methodology for estimating the time required to create solutions involving rule books and control books for data adjustment processes. The estimation framework considers inputs from domain experts, the complexity of the process, and detailed operations required for data transformation and validation. This methodology provides a systematic approach to time estimation by breaking down the process into manageable components and assigning time estimates based on defined complexity parameters.
+
+1. Introduction
+
+In data processing and adjustment workflows, creating solutions for automating manual processes involves detailed rule definitions and control frameworks. These solutions typically comprise a rule book that outlines data transformation rules and control books to validate data integrity at both pre- and post-transformation stages. Estimating the time required to design and implement such solutions is a critical step to plan resources and manage stakeholder expectations effectively. This paper outlines a methodology to estimate development time based on the complexity and nature of tasks involved.
+
+2. Objective
+
+The objective of this paper is to define a methodology for estimating the time required to:
+	1.	Write the rules in the rule book, including data enrichment, filtering, aggregation, and calculations.
+	2.	Develop pre- and post-control books for data validation and reconciliation.
+	3.	Quantify the impact of key complexity parameters on the time estimation process.
+
+3. Methodology
+
+3.1 Process Overview
+
+	1.	Expert Consultation:
+	•	Domain experts manually performing the data adjustment process will provide detailed explanations of the workflow.
+	•	Inputs include:
+	•	Input files used (transaction data, mapping files, filters, etc.).
+	•	Specific rules for copying, enriching, filtering, and calculating data.
+	•	Allocation and aggregation rules to create final output.
+	2.	Rule Book Creation:
+	•	Documenting data processing rules, such as:
+	•	Identifying input columns for copying.
+	•	Lookup operations for data enrichment.
+	•	Filters applied for specific conditions.
+	•	Allocation and proportion rules.
+	•	Aggregation and transformation steps.
+	3.	Control Book Creation:
+	•	Pre-Control Book:
+	•	Validations on raw input data (e.g., null value checks, specific mappings, or range validations).
+	•	Post-Control Book:
+	•	Validations and reconciliations on output data, including:
+	•	Comparing aggregated outputs with input data.
+	•	Verifying consolidated values.
+
+3.2 Complexity Parameters
+
+The following parameters are used to estimate the complexity of the process:
+	1.	Number of Data Enrichment Files:
+	•	The number of input files used for lookup, filtering, or enrichment.
+	2.	Allocation Rules:
+	•	Whether allocation or proportion logic is required.
+	3.	Aggregation Requirements:
+	•	Steps needed to consolidate data for the final output.
+	4.	Control Requirements:
+	•	Number and type of validations/reconciliations in pre- and post-control books.
+	5.	Mapping Tables:
+	•	The number of mapping tables used for lookups and enrichment.
+
+3.3 Time Estimation Framework
+
+Each activity is assigned a standard time estimate based on its complexity. For example:
+	•	Column Copying: 10 minutes per column.
+	•	Lookup Operations: 20 minutes per column.
+	•	Reconciliation Tasks: 30 minutes per control.
+	•	Pivoting/Unpivoting Data: 30 minutes per operation.
+
+Time estimates will be summed based on the total number of operations identified during the expert consultation phase.
+
+4. Assumptions
+
+The following assumptions underpin the methodology:
+	1.	The domain expert can articulate the process steps clearly without ambiguities.
+	2.	Input files and their schemas are available and well-documented.
+	3.	Time estimates are based on average processing times observed in prior implementations.
+	4.	Any unforeseen complexities (e.g., missing input data) will be addressed through additional consultation, impacting the time estimate.
+
+5. Estimation Calculation Table
+
+The following table outlines time estimates for individual tasks based on complexity parameters:
+
+Activity	Unit of Work	Time per Unit (minutes)	Comments
+Column Copying	Per column	10	Simple copy operation.
+Lookup for Enrichment	Per column	20	Includes mapping table lookups.
+Filtering	Per condition	15	Based on specific criteria.
+Allocation	Per rule	25	Allocation or proportion calculations.
+Aggregation for Uploader	Per dataset	40	Includes consolidation steps.
+Reconciliation (Post-Control)	Per control point	30	Data comparison and validation.
+Pivoting/Unpivoting Columns	Per operation	30	Reformatting data structure.
+
+6. Conclusion
+
+This paper provides a structured approach for estimating the time required to create rule books and control books for data adjustment processes. The methodology incorporates expert inputs, defined complexity parameters, and standard time estimates for each activity. This framework can be adapted for similar projects to ensure accurate and reliable time planning.
+
+
+-----
 import os
 import shutil
 import re
