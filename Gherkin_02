@@ -1,0 +1,121 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
+
+# Authenticate BigQuery
+try:
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+
+# Create workbook for evidence
+wb_evidence = Workbook()
+
+def get_local_data(project, dataset, table, column):
+    """Retrieve specific column data from a local Excel file."""
+    project_path = os.path.join(LOCAL_DATA_FOLDER, project)
+    dataset_file = os.path.join(project_path, f"{dataset}.xlsx")
+    
+    if os.path.exists(dataset_file):
+        try:
+            df = pd.read_excel(dataset_file, sheet_name=table, usecols=[column])
+            return df[[column]]  # Ensure returning only the required column
+        except Exception as e:
+            print(colored(f"Error reading Excel file: {e}", "red"))
+            return None
+    return None
+
+def get_bigquery_data(project, dataset, table, column):
+    """Retrieve specific column data from BigQuery."""
+    if bigquery_available:
+        query = f"SELECT {column} FROM `{project}.{dataset}.{table}`"
+        try:
+            df = client.query(query).to_dataframe()
+            return df[[column]]  # Ensure returning only the required column
+        except Exception as e:
+            print(colored(f"Error querying BigQuery: {e}", "red"))
+            return None
+    return None
+
+def compare_datasets(test_case):
+    """Compare two datasets based on test case details."""
+    scenario = str(test_case["Scenario"]).lower()
+    test_data_raw = str(test_case["Test Data"])
+
+    try:
+        # Convert Test Data (JSON string) to dictionary
+        test_data = json.loads(test_data_raw.replace("'", '"')) if test_data_raw != "nan" else {}
+        test_case_id = test_case["Test Case ID"]
+
+        # Extract dataset1 and dataset2 details
+        dataset1_info = test_data.get("dataset1", {})
+        dataset2_info = test_data.get("dataset2", {})
+
+        project1, dataset1, table1, column1 = dataset1_info.get("project"), dataset1_info.get("dataset"), dataset1_info.get("table"), dataset1_info.get("column")
+        project2, dataset2, table2, column2 = dataset2_info.get("project"), dataset2_info.get("dataset"), dataset2_info.get("table"), dataset2_info.get("column")
+
+        # Fetch specific column datasets from either local or BigQuery
+        data1 = get_local_data(project1, dataset1, table1, column1)
+        if data1 is None:
+            data1 = get_bigquery_data(project1, dataset1, table1, column1)
+        
+        data2 = get_local_data(project2, dataset2, table2, column2)
+        if data2 is None:
+            data2 = get_bigquery_data(project2, dataset2, table2, column2)
+
+        if data1 is not None and data2 is not None:
+            # Perform action based on 'Then' step
+            if "count should be equal" in scenario:
+                passed = len(data1) == len(data2)
+            elif "values should match" in scenario:
+                passed = data1[column1].reset_index(drop=True).equals(data2[column2].reset_index(drop=True))
+            else:
+                passed = False  # Unsupported action
+
+            print(colored(f"{test_case_id} - {'Pass' if passed else 'Fail'}", "green" if passed else "red"))
+            return "Pass" if passed else "Fail", data1, data2
+
+        print(colored(f"{test_case_id} - Skipped - Data not found", "yellow"))
+        return "Skipped", None, None
+
+    except Exception as e:
+        print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
+        return "Error", None, None
+
+# Apply function to all test cases
+test_cases[["Result", "Dataset1", "Dataset2"]] = test_cases.apply(lambda row: pd.Series(compare_datasets(row)), axis=1)
+
+# Save updated results back to Excel
+test_cases.to_excel(output_file, index=False)
+
+# Save evidence in a separate Excel file
+with pd.ExcelWriter(evidence_file) as writer:
+    for _, row in test_cases.iterrows():
+        sheet_name = row["Test Case ID"]
+        evidence_df = pd.DataFrame({
+            "Test Case ID": [row["Test Case ID"]],
+            "Scenario": [row["Scenario"]],
+            "Result": [row["Result"]]
+        })
+        evidence_df.to_excel(writer, sheet_name=sheet_name, index=False)
+        if row["Dataset1"] is not None:
+            row["Dataset1"].to_excel(writer, sheet_name=sheet_name, startrow=5, index=False)
+        if row["Dataset2"] is not None:
+            row["Dataset2"].to_excel(writer, sheet_name=sheet_name, startrow=5+len(row["Dataset1"])+2, index=False)
+
+print("\n✅ Test execution completed. Results saved in:", output_file)
+print("✅ Evidence saved in:", evidence_file)
