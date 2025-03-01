@@ -1,22 +1,142 @@
-Here’s your email refined for clarity while keeping it natural and in active voice:
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import load_workbook, Workbook
+from openpyxl.styles import PatternFill
 
-Subject: Testing CoE Strategy – Next Steps
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
 
-Hi Monica / Stacy,
+# Authenticate BigQuery
+try:
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
 
-Thank you for your support and willingness to be involved in the Testing CoE strategy.
+# Load test cases from Excel
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
 
-I agree that this phase is mostly about getting alignment across teams on the strategy objectives and proposals. Most of our proposals focus on Shift-Left principles and ensuring testing is completed within sprints as part of an Agile way of working. To make this transition smooth, we will need a mindset shift and Agile training for the teams.
+# Create workbook for evidence
+wb_evidence = Workbook()
 
-I expect we will be able to finalize the strategy proposals by March 21st, so I’d like to set up a separate call with you in the third week of March to discuss how we can further align the strategy with Agile ways of working and take your guidance on the mindset shift. We can also talk about what Agile trainings would be useful for the testing teams and how to maintain governance over the strategy moving forward.
+# Function to check if local data exists
+def check_local_data(test_data):
+    project = test_data.get("project", "").strip()
+    dataset = test_data.get("dataset", "").strip()
+    table = test_data.get("table", "").strip()
+    column = test_data.get("column", "").strip()
 
-Please feel free to skip the Friday advisory meetings for now. I will set up some time for you and Stacy around March 20th and add a placeholder for that. Let me know if that works for you.
+    project_path = os.path.join(LOCAL_DATA_FOLDER, project)
 
-I really appreciate your support, and Ushaan is also happy to have you as part of our advisory group. I will keep you copied on the meeting minutes, so you can stay updated on the direction the strategy is taking.
+    if not os.path.exists(project_path):
+        return None  # No local data for this project, fall back to BigQuery
 
-Looking forward to your thoughts.
+    dataset_file = os.path.join(project_path, f"{dataset}.xlsx")
 
-Best,
-[Your Name]
+    if not os.path.exists(dataset_file):
+        return None  # No dataset file, fall back to BigQuery
 
-This version keeps it natural, clear, and professional while maintaining warmth and engagement. Let me know if you’d like any adjustments!
+    try:
+        # Load Excel file and check if sheet (table) exists
+        xls = pd.ExcelFile(dataset_file)
+        if table not in xls.sheet_names:
+            return None  # No matching sheet (table), fall back to BigQuery
+
+        # Read data from the sheet (table)
+        df = pd.read_excel(dataset_file, sheet_name=table)
+
+        if column not in df.columns:
+            return None  # No matching column, fall back to BigQuery
+
+        return df  # Return the dataframe instead of a single column
+    except Exception as e:
+        print(colored(f"Error reading Excel file: {e}", "red"))
+        return None
+
+# Function to execute test cases
+def execute_test_case(test_case):
+    scenario = str(test_case["Scenario"]).lower()
+    test_data_raw = str(test_case["Test Data"])
+
+    try:
+        # Convert Test Data (JSON string) to dictionary
+        test_data = json.loads(test_data_raw.replace("'", '"')) if test_data_raw != "nan" else {}
+        test_case_id = test_case["Test Case ID"]
+        query = ""
+        results_df = pd.DataFrame()
+
+        # First check if data exists locally if "local database" is mentioned in the scenario
+        if "local database" in scenario:
+            local_data = check_local_data(test_data)
+            if local_data is not None:
+                query = f"SELECT * FROM {test_data.get('table', '')}"
+                results_df = local_data
+                row_count = len(local_data)
+                passed = row_count > 0
+                print(colored(f"{test_case_id} - Local Database Check - {'Pass' if passed else 'Fail'} - Found {row_count} records", "green" if passed else "red"))
+                return "Pass" if passed else "Fail", query, results_df
+
+        # Fall back to BigQuery if "bigquery" is mentioned in the scenario
+        if "bigquery" in scenario and bigquery_available:
+            if "run the query" in scenario:
+                query_template = scenario.split('"')[1]  # Extract query from Gherkin step
+                query = query_template.format(**test_data)  # Inject test data dynamically
+                results = client.query(query).to_dataframe()
+                row_count = len(results)
+                passed = row_count > 0
+            elif "compare" in scenario:
+                project = test_data.get("project", "default_project")
+                dataset = test_data.get("dataset", "default_dataset")
+                table1 = test_data.get("table1", "default_table1")
+                table2 = test_data.get("table2", "default_table2")
+                column = test_data.get("column", "id")
+
+                query = f"""
+                    SELECT COUNT({column}) FROM `{project}.{dataset}.{table1}`
+                    UNION ALL
+                    SELECT COUNT({column}) FROM `{project}.{dataset}.{table2}`
+                """
+                results = client.query(query).to_dataframe()
+                counts = results.iloc[:, 0].tolist()
+                passed = counts[0] == counts[1]
+            else:
+                return "Skipped", query, results_df
+            print(colored(f"{test_case_id} - BigQuery Check - {'Pass' if passed else 'Fail'} - Query Executed", "green" if passed else "red"))
+        else:
+            print(colored(f"{test_case_id} - Skipped - No valid data source found", "yellow"))
+            return "Skipped", query, results_df
+
+        return "Pass" if passed else "Fail", query, results_df
+
+    except Exception as e:
+        print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
+        return "Error", query, results_df
+
+# Apply function to all test cases
+test_cases[["Result", "SQL Query", "Data Output"]] = test_cases.apply(lambda row: pd.Series(execute_test_case(row)), axis=1)
+
+# Save updated results back to Excel
+test_cases.to_excel(output_file, index=False)
+
+# Save evidence in a separate Excel file
+with pd.ExcelWriter(evidence_file) as writer:
+    for _, row in test_cases.iterrows():
+        sheet_name = row["Test Case ID"]
+        evidence_df = pd.DataFrame({
+            "Test Case ID": [row["Test Case ID"]],
+            "Scenario": [row["Scenario"]],
+            "SQL Query": [row["SQL Query"]],
+            "Result": [row["Result"]]
+        })
+        evidence_df.to_excel(writer, sheet_name=sheet_name, index=False)
+        row["Data Output"].to_excel(writer, sheet_name=sheet_name, startrow=5, index=False)
+
+print("\n✅ Test execution completed. Results saved in:", output_file)
+print("✅ Evidence saved in:", evidence_file)
