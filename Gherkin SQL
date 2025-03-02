@@ -34,7 +34,7 @@ def execute_custom_bigquery(test_case):
     if not bigquery_available:
         return "Skipped"
     
-    test_data = json.loads(str(test_case["Test Data"]).replace("'", '"'))
+    test_data = json.loads(str(test_case["Test Data"]))
     query = test_data.get("sql_query")
     
     if not query:
