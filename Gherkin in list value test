@@ -36,7 +36,7 @@ def check_column_contains_values_in_bigquery(project, dataset, table, column, re
     
     print(f"Checking if column '{column}' in `{project}.{dataset}.{table}` contains required values: {required_values}")
     
-    values_str = ', '.join([f"'{value.replace("'", "\'").replace('"', '\"')}'" for value in required_values])
+    values_str = ', '.join([f"'{value.replace("'", "\\'").replace('"', '\\"')}'" for value in required_values])
     query = f"""
         SELECT COUNT(DISTINCT {column}) AS matched_count
         FROM `{project}.{dataset}.{table}`
