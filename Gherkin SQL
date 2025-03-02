@@ -1,0 +1,80 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
+
+# Authenticate BigQuery
+try:
+    print("Authenticating with BigQuery...")
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+    print("BigQuery authentication successful.")
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+print("Loading test cases from Excel...")
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+print("Test cases loaded successfully.")
+
+# Create workbook for evidence
+wb_evidence = Workbook()
+
+def execute_custom_bigquery(test_case):
+    """Execute a user-provided SQL query in BigQuery."""
+    if not bigquery_available:
+        return "Skipped"
+    
+    test_data = json.loads(str(test_case["Test Data"]).replace("'", '"'))
+    query = test_data.get("sql_query")
+    
+    if not query:
+        return "Error: No SQL query provided"
+    
+    print(f"Executing custom BigQuery query:\n{query}")
+    try:
+        df = client.query(query).to_dataframe()
+        print("Query executed successfully.")
+        return "Pass" if not df.empty else "Fail"
+    except Exception as e:
+        print(colored(f"Error executing BigQuery query: {e}", "red"))
+        return "Error"
+
+def execute_query(test_case):
+    """Determine whether to execute a custom SQL query in BigQuery."""
+    scenario = str(test_case["Scenario"]).lower()
+    if "custom sql query in bigquery" in scenario:
+        return execute_custom_bigquery(test_case)
+    return "Skipped"
+
+# Update test case processing functions
+PROCESSORS.update({
+    "custom sql query in bigquery": execute_query
+})
+
+print("Starting test case execution...")
+
+def process_test_case(row):
+    scenario = str(row["Scenario"]).lower()
+    for keyword, function in PROCESSORS.items():
+        if keyword in scenario:
+            return function(row)
+    return "Skipped"
+
+test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
+
+print("All test case checks completed.")
+
+# Save updated results back to Excel
+print("Saving results to Excel...")
+test_cases.to_excel(output_file, index=False)
+print("✅ Test execution completed. Results saved in:", output_file)
