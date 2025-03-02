@@ -71,6 +71,9 @@ def check_new_column(test_case):
     scenario = str(test_case["Scenario"]).lower()
     test_data_raw = str(test_case["Test Data"])
 
+    if "new column" not in scenario:
+        return "Skipped"
+
     try:
         test_data = json.loads(test_data_raw.replace("'", '"')) if test_data_raw != "nan" else {}
         test_case_id = test_case["Test Case ID"]
@@ -91,7 +94,7 @@ def check_new_column(test_case):
         return "Error"
 
 print("Starting new column existence checks...")
-test_cases["Result"] = test_cases.apply(lambda row: check_new_column(row), axis=1)
+test_cases["Result"] = test_cases.apply(lambda row: check_new_column(row) if "new column" in str(row["Scenario"]).lower() else "Skipped", axis=1)
 print("All column existence checks completed.")
 
 # Save updated results back to Excel
