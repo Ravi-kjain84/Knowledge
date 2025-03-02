@@ -48,16 +48,19 @@ def compare_bigquery_tables(project1, dataset1, table1, column1, project2, datas
         """
     elif "values should match" in scenario:
         query = f"""
-            SELECT COUNT(*) AS mismatch_count
+            SELECT CASE 
+                WHEN COUNT(*) = 0 THEN 'Pass' 
+                ELSE 'Fail' 
+            END AS comparison_result
             FROM (
-                SELECT {column1} AS col FROM `{project1}.{dataset1}.{table1}`
+                (SELECT {column1} AS col FROM `{project1}.{dataset1}.{table1}`
                 EXCEPT DISTINCT
-                SELECT {column2} AS col FROM `{project2}.{dataset2}.{table2}`
+                SELECT {column2} AS col FROM `{project2}.{dataset2}.{table2}`)
                 UNION ALL
-                SELECT {column2} AS col FROM `{project2}.{dataset2}.{table2}`
+                (SELECT {column2} AS col FROM `{project2}.{dataset2}.{table2}`
                 EXCEPT DISTINCT
-                SELECT {column1} AS col FROM `{project1}.{dataset1}.{table1}`
-            )
+                SELECT {column1} AS col FROM `{project1}.{dataset1}.{table1}`)
+            ) AS mismatches
         """
     else:
         return "Skipped"
