@@ -1,0 +1,137 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
+
+# Authenticate BigQuery
+try:
+    print("Authenticating with BigQuery...")
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+    print("BigQuery authentication successful.")
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+print("Loading test cases from Excel...")
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+print("Test cases loaded successfully.")
+
+# Create workbook for evidence
+wb_evidence = Workbook()
+
+def aggregate_and_compare_bigquery(test_case):
+    """Aggregate data from BigQuery and compare between tables."""
+    if not bigquery_available:
+        return "Skipped"
+    
+    test_data = json.loads(str(test_case["Test Data"]).replace("'", '"'))
+    project1, dataset1, table1 = test_data["dataset1"].values()
+    project2, dataset2, table2 = test_data["dataset2"].values()
+    group_by_columns = test_data.get("group_by_columns", [])
+    amount_column = test_data.get("amount_column")
+    
+    if not group_by_columns or not amount_column:
+        return "Error: Missing group by columns or amount column"
+    
+    columns_str = ', '.join(group_by_columns)
+    query1 = f"""
+        SELECT {columns_str}, SUM({amount_column}) AS aggregated_amount
+        FROM `{project1}.{dataset1}.{table1}`
+        GROUP BY {columns_str}
+    """
+    query2 = f"""
+        SELECT {columns_str}, SUM({amount_column}) AS aggregated_amount
+        FROM `{project2}.{dataset2}.{table2}`
+        GROUP BY {columns_str}
+    """
+    
+    print("Executing aggregation queries in BigQuery...")
+    try:
+        df1 = client.query(query1).to_dataframe()
+        df2 = client.query(query2).to_dataframe()
+        
+        merged_df = df1.merge(df2, on=group_by_columns, suffixes=("_1", "_2"), how="outer")
+        merged_df["match"] = merged_df["aggregated_amount_1"].eq(merged_df["aggregated_amount_2"])
+        if merged_df["match"].all():
+            return "Pass"
+        else:
+            return "Fail"
+    except Exception as e:
+        print(colored(f"Error querying BigQuery: {e}", "red"))
+        return "Error"
+
+def aggregate_and_compare_local_database(test_case):
+    """Aggregate data from local database and compare between tables."""
+    test_data = json.loads(str(test_case["Test Data"]).replace("'", '"'))
+    project1, dataset1, table1 = test_data["dataset1"].values()
+    project2, dataset2, table2 = test_data["dataset2"].values()
+    group_by_columns = test_data.get("group_by_columns", [])
+    amount_column = test_data.get("amount_column")
+    
+    if not group_by_columns or not amount_column:
+        return "Error: Missing group by columns or amount column"
+    
+    project1_path = os.path.join(LOCAL_DATA_FOLDER, project1, f"{dataset1}.xlsx")
+    project2_path = os.path.join(LOCAL_DATA_FOLDER, project2, f"{dataset2}.xlsx")
+    
+    if not os.path.exists(project1_path) or not os.path.exists(project2_path):
+        return "Skipped"
+    
+    try:
+        df1 = pd.read_excel(project1_path, sheet_name=table1)
+        df2 = pd.read_excel(project2_path, sheet_name=table2)
+        
+        agg1 = df1.groupby(group_by_columns)[amount_column].sum().reset_index()
+        agg2 = df2.groupby(group_by_columns)[amount_column].sum().reset_index()
+        
+        merged_df = agg1.merge(agg2, on=group_by_columns, suffixes=("_1", "_2"), how="outer")
+        merged_df["match"] = merged_df["aggregated_amount_1"].eq(merged_df["aggregated_amount_2"])
+        if merged_df["match"].all():
+            return "Pass"
+        else:
+            return "Fail"
+    except Exception as e:
+        print(colored(f"Error reading local database file: {e}", "red"))
+        return "Error"
+
+def aggregate_and_compare(test_case):
+    """Determine whether to run aggregation in BigQuery or local database."""
+    scenario = str(test_case["Scenario"]).lower()
+    if "bigquery" in scenario:
+        return aggregate_and_compare_bigquery(test_case)
+    elif "local database" in scenario:
+        return aggregate_and_compare_local_database(test_case)
+    return "Skipped"
+
+# Update test case processing functions
+PROCESSORS.update({
+    "aggregate and compare": aggregate_and_compare
+})
+
+print("Starting test case execution...")
+
+def process_test_case(row):
+    scenario = str(row["Scenario"]).lower()
+    for keyword, function in PROCESSORS.items():
+        if keyword in scenario:
+            return function(row)
+    return "Skipped"
+
+test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
+
+print("All test case checks completed.")
+
+# Save updated results back to Excel
+print("Saving results to Excel...")
+test_cases.to_excel(output_file, index=False)
+print("✅ Test execution completed. Results saved in:", output_file)
