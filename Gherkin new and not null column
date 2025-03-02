@@ -66,26 +66,63 @@ def check_new_column_in_local_database(project, dataset, table, new_column):
         print(colored(f"Error reading local database file: {e}", "red"))
         return "Error"
 
-def check_new_column(test_case):
-    """Check if a new column has been added to a table."""
+def check_column_not_null_in_bigquery(project, dataset, table, column):
+    """Check if a column in BigQuery is not completely NULL or blank."""
+    if not bigquery_available:
+        return "Skipped"
+    
+    print(f"Checking if column '{column}' in `{project}.{dataset}.{table}` is not completely NULL")
+    
+    query = f"""
+        SELECT COUNT(*) AS non_null_count
+        FROM `{project}.{dataset}.{table}`
+        WHERE {column} IS NOT NULL AND TRIM({column}) != ''
+    """
+    
+    print("Executing BigQuery non-null check query...")
+    try:
+        result = client.query(query).to_dataframe()
+        return "Pass" if result["non_null_count"].iloc[0] > 0 else "Fail"
+    except Exception as e:
+        print(colored(f"Error querying BigQuery: {e}", "red"))
+        return "Error"
+
+def check_column_not_null_in_local_database(project, dataset, table, column):
+    """Check if a column in a local database file is not completely NULL or blank."""
+    print(f"Checking if column '{column}' in local table {project}/{dataset}/{table} is not completely NULL")
+    project_path = os.path.join(LOCAL_DATA_FOLDER, project, f"{dataset}.xlsx")
+    
+    if not os.path.exists(project_path):
+        print("Local database file is missing. Skipping null check.")
+        return "Skipped"
+    
+    try:
+        df = pd.read_excel(project_path, sheet_name=table, usecols=[column])
+        return "Pass" if df[column].dropna().astype(str).str.strip().ne('').any() else "Fail"
+    except Exception as e:
+        print(colored(f"Error reading local database file: {e}", "red"))
+        return "Error"
+
+def check_column_not_null(test_case):
+    """Check if a specific column is not completely NULL or blank."""
     scenario = str(test_case["Scenario"]).lower()
     test_data_raw = str(test_case["Test Data"])
 
-    if "new column" not in scenario:
+    if "not null" not in scenario:
         return "Skipped"
 
     try:
         test_data = json.loads(test_data_raw.replace("'", '"')) if test_data_raw != "nan" else {}
         test_case_id = test_case["Test Case ID"]
-        print(f"Processing test case for new column existence check: {test_case_id}")
+        print(f"Processing test case for column not null check: {test_case_id}")
 
         dataset_info = test_data.get("dataset", {})
-        project, dataset, table, new_column = dataset_info.get("project"), dataset_info.get("dataset"), dataset_info.get("table"), dataset_info.get("column")
+        project, dataset, table, column = dataset_info.get("project"), dataset_info.get("dataset"), dataset_info.get("table"), dataset_info.get("column")
 
         if "bigquery" in scenario:
-            return check_new_column_in_bigquery(project, dataset, table, new_column)
+            return check_column_not_null_in_bigquery(project, dataset, table, column)
         elif "local database" in scenario:
-            return check_new_column_in_local_database(project, dataset, table, new_column)
+            return check_column_not_null_in_local_database(project, dataset, table, column)
         
         return "Skipped"
     
@@ -97,7 +134,8 @@ def check_new_column(test_case):
 PROCESSORS = {
     "new column": check_new_column,
     "compare": compare_datasets,
-    "validate": compare_datasets
+    "validate": compare_datasets,
+    "not null": check_column_not_null
 }
 
 print("Starting test case execution...")
@@ -116,4 +154,4 @@ print("All test case checks completed.")
 # Save updated results back to Excel
 print("Saving results to Excel...")
 test_cases.to_excel(output_file, index=False)
-print("✅ Column existence check completed. Results saved in:", output_file)
+print("✅ Test execution completed. Results saved in:", output_file)
