@@ -93,9 +93,25 @@ def check_new_column(test_case):
         print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
         return "Error"
 
-print("Starting new column existence checks...")
-test_cases["Result"] = test_cases.apply(lambda row: check_new_column(row) if "new column" in str(row["Scenario"]).lower() else "Skipped", axis=1)
-print("All column existence checks completed.")
+# Define test case processing functions
+PROCESSORS = {
+    "new column": check_new_column,
+    "compare": compare_datasets,
+    "validate": compare_datasets
+}
+
+print("Starting test case execution...")
+
+def process_test_case(row):
+    scenario = str(row["Scenario"]).lower()
+    for keyword, function in PROCESSORS.items():
+        if keyword in scenario:
+            return function(row)
+    return "Skipped"
+
+test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
+
+print("All test case checks completed.")
 
 # Save updated results back to Excel
 print("Saving results to Excel...")
