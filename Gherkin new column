@@ -1,0 +1,100 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
+
+# Authenticate BigQuery
+try:
+    print("Authenticating with BigQuery...")
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+    print("BigQuery authentication successful.")
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+print("Loading test cases from Excel...")
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+print("Test cases loaded successfully.")
+
+# Create workbook for evidence
+wb_evidence = Workbook()
+
+def check_new_column_in_bigquery(project, dataset, table, new_column):
+    """Check if a new column exists in a BigQuery table."""
+    if not bigquery_available:
+        return "Skipped"
+    
+    print(f"Checking if column '{new_column}' exists in `{project}.{dataset}.{table}`")
+    
+    query = f"""
+        SELECT COUNT(*) AS column_exists
+        FROM `{project}.{dataset}.INFORMATION_SCHEMA.COLUMNS`
+        WHERE table_name = '{table}' AND column_name = '{new_column}'
+    """
+    
+    print("Executing BigQuery column existence check query...")
+    try:
+        result = client.query(query).to_dataframe()
+        return "Pass" if result["column_exists"].iloc[0] > 0 else "Fail"
+    except Exception as e:
+        print(colored(f"Error querying BigQuery: {e}", "red"))
+        return "Error"
+
+def check_new_column_in_local_database(project, dataset, table, new_column):
+    """Check if a new column exists in a local database file."""
+    print(f"Checking if column '{new_column}' exists in local table {project}/{dataset}/{table}")
+    project_path = os.path.join(LOCAL_DATA_FOLDER, project, f"{dataset}.xlsx")
+    
+    if not os.path.exists(project_path):
+        print("Local database file is missing. Skipping column check.")
+        return "Skipped"
+    
+    try:
+        df = pd.read_excel(project_path, sheet_name=table)
+        return "Pass" if new_column in df.columns else "Fail"
+    except Exception as e:
+        print(colored(f"Error reading local database file: {e}", "red"))
+        return "Error"
+
+def check_new_column(test_case):
+    """Check if a new column has been added to a table."""
+    scenario = str(test_case["Scenario"]).lower()
+    test_data_raw = str(test_case["Test Data"])
+
+    try:
+        test_data = json.loads(test_data_raw.replace("'", '"')) if test_data_raw != "nan" else {}
+        test_case_id = test_case["Test Case ID"]
+        print(f"Processing test case for new column existence check: {test_case_id}")
+
+        dataset_info = test_data.get("dataset", {})
+        project, dataset, table, new_column = dataset_info.get("project"), dataset_info.get("dataset"), dataset_info.get("table"), dataset_info.get("column")
+
+        if "bigquery" in scenario:
+            return check_new_column_in_bigquery(project, dataset, table, new_column)
+        elif "local database" in scenario:
+            return check_new_column_in_local_database(project, dataset, table, new_column)
+        
+        return "Skipped"
+    
+    except Exception as e:
+        print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
+        return "Error"
+
+print("Starting new column existence checks...")
+test_cases["Result"] = test_cases.apply(lambda row: check_new_column(row), axis=1)
+print("All column existence checks completed.")
+
+# Save updated results back to Excel
+print("Saving results to Excel...")
+test_cases.to_excel(output_file, index=False)
+print("✅ Column existence check completed. Results saved in:", output_file)
