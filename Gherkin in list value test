@@ -1,3 +1,7 @@
+-- values_str = ', '.join([f"'{value.replace(\"'\", \"\\'\").replace('\"', '\\\"')}'" for value in required_values])
+
+
+
 import os
 import pandas as pd
 import json
