@@ -1,5 +1,11 @@
 -- values_str = ', '.join([f"'{value.replace(\"'\", \"\\'\").replace('\"', '\\\"')}'" for value in required_values])
 
+-- required_values = ["O'Reilly", 'He said "Hello"']
+
+-- escaped_values = [value.replace("'", "\\'").replace('"', '\\"') for value in required_values]
+-- values_str = ', '.join(f"'{v}'" for v in escaped_values)
+
+-- print(values_str)  # Output: "'O\\'Reilly', 'He said \\"Hello\\"'"
 
 
 import os
