@@ -1,0 +1,119 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
+
+# Authenticate BigQuery
+try:
+    print("Authenticating with BigQuery...")
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+    print("BigQuery authentication successful.")
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+print("Loading test cases from Excel...")
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+print("Test cases loaded successfully.")
+
+# Create workbook for evidence
+wb_evidence = Workbook()
+
+def check_column_contains_values_in_bigquery(project, dataset, table, column, required_values):
+    """Check if a column in BigQuery contains all required values."""
+    if not bigquery_available:
+        return "Skipped"
+    
+    print(f"Checking if column '{column}' in `{project}.{dataset}.{table}` contains required values: {required_values}")
+    
+    values_str = ', '.join([f"'{value}'" for value in required_values])
+    query = f"""
+        SELECT COUNT(DISTINCT {column}) AS matched_count
+        FROM `{project}.{dataset}.{table}`
+        WHERE {column} IN ({values_str})
+    """
+    
+    print("Executing BigQuery required values check query...")
+    try:
+        result = client.query(query).to_dataframe()
+        return "Pass" if result["matched_count"].iloc[0] == len(required_values) else "Fail"
+    except Exception as e:
+        print(colored(f"Error querying BigQuery: {e}", "red"))
+        return "Error"
+
+def check_column_contains_values_in_local_database(project, dataset, table, column, required_values):
+    """Check if a column in a local database file contains all required values."""
+    print(f"Checking if column '{column}' in local table {project}/{dataset}/{table} contains required values: {required_values}")
+    project_path = os.path.join(LOCAL_DATA_FOLDER, project, f"{dataset}.xlsx")
+    
+    if not os.path.exists(project_path):
+        print("Local database file is missing. Skipping required values check.")
+        return "Skipped"
+    
+    try:
+        df = pd.read_excel(project_path, sheet_name=table, usecols=[column])
+        return "Pass" if set(required_values).issubset(set(df[column].dropna().unique())) else "Fail"
+    except Exception as e:
+        print(colored(f"Error reading local database file: {e}", "red"))
+        return "Error"
+
+def check_column_contains_values(test_case):
+    """Check if a column contains all required values."""
+    scenario = str(test_case["Scenario"]).lower()
+    test_data_raw = str(test_case["Test Data"])
+
+    if "contains values" not in scenario:
+        print(f"Skipping test case {test_case['Test Case ID']} - Scenario does not match 'contains values'.")
+        return "Skipped"
+
+    try:
+        test_data = json.loads(test_data_raw.replace("'", '"')) if test_data_raw != "nan" else {}
+        test_case_id = test_case["Test Case ID"]
+        print(f"Processing test case for column contains values check: {test_case_id}")
+
+        dataset_info = test_data.get("dataset", {})
+        project, dataset, table, column = dataset_info.get("project"), dataset_info.get("dataset"), dataset_info.get("table"), dataset_info.get("column")
+        required_values = test_data.get("required_values", [])
+
+        if "bigquery" in scenario:
+            return check_column_contains_values_in_bigquery(project, dataset, table, column, required_values)
+        elif "local database" in scenario:
+            return check_column_contains_values_in_local_database(project, dataset, table, column, required_values)
+    return "Skipped"
+    
+    except Exception as e:
+        print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
+        return "Error"
+
+# Update test case processing functions
+PROCESSORS.update({
+    "contains values": check_column_contains_values
+})
+
+print("Starting test case execution...")
+
+def process_test_case(row):
+    scenario = str(row["Scenario"]).lower()
+    for keyword, function in PROCESSORS.items():
+        if keyword in scenario:
+            return function(row)
+    return "Skipped"
+
+test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
+
+print("All test case checks completed.")
+
+# Save updated results back to Excel
+print("Saving results to Excel...")
+test_cases.to_excel(output_file, index=False)
+print("✅ Test execution completed. Results saved in:", output_file)
