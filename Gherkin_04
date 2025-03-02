@@ -1,0 +1,137 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
+
+# Authenticate BigQuery
+try:
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+
+# Create workbook for evidence
+wb_evidence = Workbook()
+
+def compare_bigquery_tables(project1, dataset1, table1, column1, project2, dataset2, table2, column2, scenario):
+    """Compare two BigQuery tables directly using SQL."""
+    if not bigquery_available:
+        return "Skipped"
+    
+    # SQL query to compare row counts
+    if "count should be equal" in scenario:
+        query = f"""
+            SELECT 
+                CASE 
+                    WHEN (SELECT COUNT(*) FROM `{project1}.{dataset1}.{table1}`) =
+                         (SELECT COUNT(*) FROM `{project2}.{dataset2}.{table2}`)
+                    THEN 'Pass'
+                    ELSE 'Fail'
+                END AS comparison_result
+        """
+    # SQL query to compare values in the specified column
+    elif "values should match" in scenario:
+        query = f"""
+            SELECT COUNT(*) AS mismatch_count
+            FROM (
+                SELECT {column1} AS col FROM `{project1}.{dataset1}.{table1}`
+                EXCEPT DISTINCT
+                SELECT {column2} AS col FROM `{project2}.{dataset2}.{table2}`
+                UNION ALL
+                SELECT {column2} AS col FROM `{project2}.{dataset2}.{table2}`
+                EXCEPT DISTINCT
+                SELECT {column1} AS col FROM `{project1}.{dataset1}.{table1}`
+            )
+        """
+    else:
+        return "Skipped"
+
+    try:
+        # Execute query in BigQuery
+        result = client.query(query).to_dataframe()
+        
+        # Process result for row count comparison
+        if "count should be equal" in scenario:
+            return result["comparison_result"].iloc[0]
+        
+        # Process result for value comparison
+        elif "values should match" in scenario:
+            mismatch_count = result["mismatch_count"].iloc[0]
+            return "Fail" if mismatch_count > 0 else "Pass"
+    except Exception as e:
+        print(colored(f"Error querying BigQuery: {e}", "red"))
+        return "Error"
+
+def compare_local_database_tables(project1, dataset1, table1, column1, project2, dataset2, table2, column2, scenario):
+    """Compare two local database tables using pandas."""
+    project1_path = os.path.join(LOCAL_DATA_FOLDER, project1, f"{dataset1}.xlsx")
+    project2_path = os.path.join(LOCAL_DATA_FOLDER, project2, f"{dataset2}.xlsx")
+    
+    if not os.path.exists(project1_path) or not os.path.exists(project2_path):
+        return "Skipped"
+    
+    try:
+        df1 = pd.read_excel(project1_path, sheet_name=table1, usecols=[column1])
+        df2 = pd.read_excel(project2_path, sheet_name=table2, usecols=[column2])
+        
+        # Compare row counts
+        if "count should be equal" in scenario:
+            return "Pass" if len(df1) == len(df2) else "Fail"
+        
+        # Compare values
+        elif "values should match" in scenario:
+            return "Pass" if df1[column1].reset_index(drop=True).equals(df2[column2].reset_index(drop=True)) else "Fail"
+        
+    except Exception as e:
+        print(colored(f"Error reading local database files: {e}", "red"))
+        return "Error"
+    
+    return "Skipped"
+
+def compare_datasets(test_case):
+    """Compare two datasets based on test case details."""
+    scenario = str(test_case["Scenario"]).lower()
+    test_data_raw = str(test_case["Test Data"])
+
+    try:
+        # Convert Test Data (JSON string) to dictionary
+        test_data = json.loads(test_data_raw.replace("'", '"')) if test_data_raw != "nan" else {}
+        test_case_id = test_case["Test Case ID"]
+
+        # Extract dataset1 and dataset2 details
+        dataset1_info = test_data.get("dataset1", {})
+        dataset2_info = test_data.get("dataset2", {})
+
+        project1, dataset1, table1, column1 = dataset1_info.get("project"), dataset1_info.get("dataset"), dataset1_info.get("table"), dataset1_info.get("column")
+        project2, dataset2, table2, column2 = dataset2_info.get("project"), dataset2_info.get("dataset"), dataset2_info.get("table"), dataset2_info.get("column")
+
+        # Perform comparison for BigQuery scenarios
+        if "bigquery" in scenario:
+            return compare_bigquery_tables(project1, dataset1, table1, column1, project2, dataset2, table2, column2, scenario)
+        
+        # Perform comparison for Local Database scenarios
+        return compare_local_database_tables(project1, dataset1, table1, column1, project2, dataset2, table2, column2, scenario)
+    
+    except Exception as e:
+        print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
+        return "Error"
+
+# Apply function to all test cases
+test_cases["Result"] = test_cases.apply(lambda row: compare_datasets(row), axis=1)
+
+# Save updated results back to Excel
+test_cases.to_excel(output_file, index=False)
+
+print("\n✅ Test execution completed. Results saved in:", output_file)
