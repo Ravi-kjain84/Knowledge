@@ -30,7 +30,7 @@ print("Test cases loaded successfully.")
 wb_evidence = Workbook()
 
 def execute_custom_bigquery(test_case):
-    """Execute a user-provided SQL query in BigQuery."""
+    """Execute a user-provided SQL query in BigQuery and expect a pass/fail result along with other variables."""
     if not bigquery_available:
         return "Skipped"
     
@@ -44,17 +44,23 @@ def execute_custom_bigquery(test_case):
     try:
         df = client.query(query).to_dataframe()
         print("Query executed successfully.")
-        return "Pass" if not df.empty else "Fail"
+        
+        # Expecting the first column to contain either 'Pass' or 'Fail'
+        if not df.empty and df.shape[1] > 0:
+            result = str(df.iloc[0, 0]).strip().lower()
+            additional_info = df.iloc[0, 1:].to_dict() if df.shape[1] > 1 else {}
+            return "Pass" if result == "pass" else "Fail"
+        return "Fail", {}
     except Exception as e:
         print(colored(f"Error executing BigQuery query: {e}", "red"))
-        return "Error"
+        return "Error", {}
 
 def execute_query(test_case):
     """Determine whether to execute a custom SQL query in BigQuery."""
     scenario = str(test_case["Scenario"]).lower()
     if "custom sql query in bigquery" in scenario:
         return execute_custom_bigquery(test_case)
-    return "Skipped"
+    return "Skipped", {}
 
 # Update test case processing functions
 PROCESSORS.update({
@@ -67,7 +73,10 @@ def process_test_case(row):
     scenario = str(row["Scenario"]).lower()
     for keyword, function in PROCESSORS.items():
         if keyword in scenario:
-            return function(row)
+            result, additional_info = function(row)
+            for key, value in additional_info.items():
+                row[key] = value  # Store additional data in the row
+            return result
     return "Skipped"
 
 test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
