@@ -29,8 +29,8 @@ print("Test cases loaded successfully.")
 # Create workbook for evidence
 wb_evidence = Workbook()
 
-def aggregate_and_compare_bigquery(test_case):
-    """Aggregate data from BigQuery and compare between tables."""
+def aggregate_bigquery(test_case):
+    """Aggregate data from BigQuery and validate between tables."""
     if not bigquery_available:
         return "Skipped"
     
@@ -70,8 +70,8 @@ def aggregate_and_compare_bigquery(test_case):
         print(colored(f"Error querying BigQuery: {e}", "red"))
         return "Error"
 
-def aggregate_and_compare_local_database(test_case):
-    """Aggregate data from local database and compare between tables."""
+def aggregate_local_database(test_case):
+    """Aggregate data from local database and validate between tables."""
     test_data = json.loads(str(test_case["Test Data"]).replace("'", '"'))
     project1, dataset1, table1 = test_data["dataset1"].values()
     project2, dataset2, table2 = test_data["dataset2"].values()
@@ -104,18 +104,18 @@ def aggregate_and_compare_local_database(test_case):
         print(colored(f"Error reading local database file: {e}", "red"))
         return "Error"
 
-def aggregate_and_compare(test_case):
+def aggregate(test_case):
     """Determine whether to run aggregation in BigQuery or local database."""
     scenario = str(test_case["Scenario"]).lower()
     if "bigquery" in scenario:
-        return aggregate_and_compare_bigquery(test_case)
+        return aggregate_bigquery(test_case)
     elif "local database" in scenario:
-        return aggregate_and_compare_local_database(test_case)
+        return aggregate_local_database(test_case)
     return "Skipped"
 
 # Update test case processing functions
 PROCESSORS.update({
-    "aggregate and compare": aggregate_and_compare
+    "aggregate": aggregate
 })
 
 print("Starting test case execution...")
