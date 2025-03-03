@@ -1,0 +1,113 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/test_execution_evidence.xlsx"
+
+# Authenticate BigQuery
+try:
+    print("Authenticating with BigQuery...")
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+    print("BigQuery authentication successful.")
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+print("Loading test cases from Excel...")
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+print("Test cases loaded successfully.")
+
+# Create workbook for evidence
+wb_evidence = Workbook()
+
+def apply_where_clause(query, where_clause):
+    """Append WHERE clause to the query if provided."""
+    if where_clause and where_clause.strip():
+        query = query.strip()
+        if "WHERE" in query.upper():
+            query += f" AND ({where_clause})"
+        else:
+            query += f" WHERE {where_clause}"
+    return query
+
+def check_column_not_null_in_bigquery(project, dataset, table, column, where_clause=""):
+    """Check if a column in BigQuery is not completely NULL or blank with an optional WHERE clause."""
+    if not bigquery_available:
+        return "Skipped"
+    
+    print(f"Checking if column '{column}' in `{project}.{dataset}.{table}` is not completely NULL")
+    
+    query = f"""
+        SELECT COUNT(*) AS non_null_count
+        FROM `{project}.{dataset}.{table}`
+        WHERE {column} IS NOT NULL AND TRIM({column}) != ''
+    """
+    
+    query = apply_where_clause(query, where_clause or "")
+    print("Executing BigQuery non-null check query...")
+    try:
+        result = client.query(query).to_dataframe()
+        return "Pass" if result["non_null_count"].iloc[0] > 0 else "Fail"
+    except Exception as e:
+        print(colored(f"Error querying BigQuery: {e}", "red"))
+        return "Error"
+
+def check_column_not_null(test_case):
+    """Check if a specific column is not completely NULL or blank with an optional WHERE clause."""
+    scenario = str(test_case["Scenario"]).lower()
+    test_data_raw = str(test_case["Test Data"])
+    
+    if "not null" not in scenario:
+        return "Skipped"
+    
+    try:
+        test_data = json.loads(test_data_raw) if test_data_raw != "nan" else {}
+        test_case_id = test_case["Test Case ID"]
+        print(f"Processing test case for column not null check: {test_case_id}")
+        
+        dataset_info = test_data.get("dataset", {})
+        project, dataset, table, column = dataset_info.get("project"), dataset_info.get("dataset"), dataset_info.get("table"), dataset_info.get("column")
+        where_clause = dataset_info.get("where_clause", "")
+        
+        if "bigquery" in scenario:
+            return check_column_not_null_in_bigquery(project, dataset, table, column, where_clause)
+        
+        return "Skipped"
+    
+    except Exception as e:
+        print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
+        return "Error"
+
+# Define test case processing functions
+PROCESSORS = {
+    "compare": compare_datasets,
+    "new column": check_new_column_in_bigquery,
+    "not null": check_column_not_null
+}
+
+print("Starting test case execution...")
+
+def process_test_case(row):
+    scenario = str(row["Scenario"]).lower()
+    for keyword, function in PROCESSORS.items():
+        if keyword in scenario:
+            return function(row)
+    return "Skipped"
+
+test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
+
+print("All test case checks completed.")
+
+# Save updated results back to Excel
+print("Saving results to Excel...")
+test_cases.to_excel(output_file, index=False)
+print("✅ Test execution completed. Results saved in:", output_file)
