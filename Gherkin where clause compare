@@ -31,7 +31,7 @@ wb_evidence = Workbook()
 
 def apply_where_clause(query, where_clause):
     """Append WHERE clause to the query if provided."""
-    if where_clause:
+    if where_clause and where_clause.strip():
         query = query.strip()
         if "WHERE" in query.upper():
             query += f" AND ({where_clause})"
@@ -49,8 +49,8 @@ def compare_datasets_in_bigquery(project1, dataset1, table1, where_clause1, proj
     query1 = f"SELECT * FROM `{project1}.{dataset1}.{table1}`"
     query2 = f"SELECT * FROM `{project2}.{dataset2}.{table2}`"
     
-    query1 = apply_where_clause(query1, where_clause1)
-    query2 = apply_where_clause(query2, where_clause2)
+    query1 = apply_where_clause(query1, where_clause1 or "")
+    query2 = apply_where_clause(query2, where_clause2 or "")
     
     print("Executing BigQuery comparison queries...")
     try:
@@ -79,10 +79,12 @@ def compare_datasets(test_case):
         print(f"Processing test case for dataset comparison: {test_case_id}")
         
         dataset1_info = test_data.get("dataset1", {})
-        project1, dataset1, table1, where_clause1 = dataset1_info.get("project"), dataset1_info.get("dataset"), dataset1_info.get("table"), dataset1_info.get("where_clause", "")
+        project1, dataset1, table1 = dataset1_info.get("project"), dataset1_info.get("dataset"), dataset1_info.get("table")
+        where_clause1 = dataset1_info.get("where_clause", "")
         
         dataset2_info = test_data.get("dataset2", {})
-        project2, dataset2, table2, where_clause2 = dataset2_info.get("project"), dataset2_info.get("dataset"), dataset2_info.get("table"), dataset2_info.get("where_clause", "")
+        project2, dataset2, table2 = dataset2_info.get("project"), dataset2_info.get("dataset"), dataset2_info.get("table")
+        where_clause2 = dataset2_info.get("where_clause", "")
         
         if "bigquery" in scenario:
             return compare_datasets_in_bigquery(project1, dataset1, table1, where_clause1, project2, dataset2, table2, where_clause2)
