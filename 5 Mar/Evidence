@@ -1,0 +1,184 @@
+import os
+import pandas as pd
+import json
+from google.cloud import bigquery
+from termcolor import colored
+from openpyxl import Workbook
+
+# Define root folder where local data is stored
+LOCAL_DATA_FOLDER = "/content/data"
+output_file = "/content/test_cases_results.xlsx"
+evidence_file = "/content/Test Case Evidences.xlsx"
+
+# Authenticate BigQuery
+try:
+    print("Authenticating with BigQuery...")
+    client = bigquery.Client.from_service_account_json("your-service-account.json")
+    bigquery_available = True
+    print("BigQuery authentication successful.")
+except Exception as e:
+    print(colored("BigQuery authentication failed. Only local data will be used.", "red"))
+    bigquery_available = False
+
+# Load test cases from Excel
+print("Loading test cases from Excel...")
+test_cases_file = "test_cases.xlsx"
+test_cases = pd.read_excel(test_cases_file)
+print("Test cases loaded successfully.")
+
+# Dictionary to store test evidence details
+test_evidence = {}
+
+def apply_where_clause(query, where_clause):
+    """Append WHERE clause to the query if provided."""
+    if where_clause and where_clause.strip():
+        query = query.strip()
+        if "WHERE" in query.upper():
+            query += f" AND ({where_clause})"
+        else:
+            query += f" WHERE {where_clause}"
+    return query
+
+def compare_column_counts_in_bigquery(project1, dataset1, table1, column1, where_clause1,
+                                       project2, dataset2, table2, column2, where_clause2, test_case_id):
+    """Compare counts of a specific column between two datasets in BigQuery using SQL CASE statement and return counts with explanation."""
+    if not bigquery_available:
+        return "Skipped", 0, 0, "BigQuery not available. Skipping test."
+    
+    print(f"Comparing count of column '{column1}' in `{project1}.{dataset1}.{table1}` with `{project2}.{dataset2}.{table2}`")
+    
+    query = f"""
+        WITH count1 AS (
+            SELECT COUNT({column1}) AS count_value1 FROM `{project1}.{dataset1}.{table1}`
+            {('WHERE ' + where_clause1) if where_clause1 else ''}
+        ),
+        count2 AS (
+            SELECT COUNT({column2}) AS count_value2 FROM `{project2}.{dataset2}.{table2}`
+            {('WHERE ' + where_clause2) if where_clause2 else ''}
+        )
+        SELECT 
+            c1.count_value1 AS count_table1,
+            c2.count_value2 AS count_table2,
+            CASE 
+                WHEN c1.count_value1 = c2.count_value2 THEN 'Pass'
+                ELSE 'Fail'
+            END AS result,
+            CONCAT('Count in ', '{project1}.{dataset1}.{table1}', ' (', '{column1}', '): ', c1.count_value1, 
+                   ', Count in ', '{project2}.{dataset2}.{table2}', ' (', '{column2}', '): ', c2.count_value2) AS explanation
+        FROM count1 c1, count2 c2;
+    """
+    
+    print("Executing BigQuery count comparison query...")
+    try:
+        df = client.query(query).to_dataframe()
+        result = df["result"].iloc[0]
+        count_table1 = df["count_table1"].iloc[0]
+        count_table2 = df["count_table2"].iloc[0]
+        explanation = df["explanation"].iloc[0]
+
+        # Store evidence
+        test_evidence[test_case_id] = {
+            "Test Case Information": {
+                "Test Case ID": test_case_id,
+                "Scenario": "Compare Counts",
+                "Result": result
+            },
+            "SQL Logic": query,
+            "SQL Output": {
+                "Count Table 1": count_table1,
+                "Count Table 2": count_table2,
+                "Explanation": explanation
+            }
+        }
+
+        return result, count_table1, count_table2, explanation
+
+    except Exception as e:
+        print(colored(f"Error querying BigQuery: {e}", "red"))
+        return "Error", 0, 0, f"Error querying BigQuery: {str(e)}"
+
+def compare_column_counts(test_case):
+    """Compare column counts between two datasets with optional WHERE clauses using BigQuery."""
+    scenario = str(test_case["Scenario"]).lower()
+    test_data_raw = str(test_case["Test Data"])
+    
+    if "compare counts" not in scenario:
+        return "Skipped", 0, 0, "Not a count comparison test."
+    
+    try:
+        test_data = json.loads(test_data_raw) if test_data_raw != "nan" else {}
+        test_case_id = test_case["Test Case ID"]
+        print(f"Processing test case for column count comparison: {test_case_id}")
+        
+        dataset1_info = test_data.get("dataset1", {})
+        project1, dataset1, table1, column1 = dataset1_info.get("project"), dataset1_info.get("dataset"), dataset1_info.get("table"), dataset1_info.get("column")
+        where_clause1 = dataset1_info.get("where_clause", "")
+        
+        dataset2_info = test_data.get("dataset2", {})
+        project2, dataset2, table2, column2 = dataset2_info.get("project"), dataset2_info.get("dataset"), dataset2_info.get("table"), dataset2_info.get("column")
+        where_clause2 = dataset2_info.get("where_clause", "")
+        
+        if "bigquery" in scenario:
+            return compare_column_counts_in_bigquery(project1, dataset1, table1, column1, where_clause1,
+                                                     project2, dataset2, table2, column2, where_clause2, test_case_id)
+        
+        return "Skipped", 0, 0, "BigQuery scenario not detected."
+    
+    except Exception as e:
+        print(colored(f"{test_case_id} - Error - {str(e)}", "red"))
+        return "Error", 0, 0, f"Error processing test case: {str(e)}"
+
+# Define test case processing functions
+PROCESSORS = {
+    "compare counts": compare_column_counts
+}
+
+print("Starting test case execution...")
+
+def process_test_case(row):
+    scenario = str(row["Scenario"]).lower()
+    for keyword, function in PROCESSORS.items():
+        if keyword in scenario:
+            result, count_table1, count_table2, explanation = function(row)
+            row["Count Table 1"] = count_table1
+            row["Count Table 2"] = count_table2
+            row["Explanation"] = explanation
+            return result
+    return "Skipped"
+
+test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
+
+print("All test case checks completed.")
+
+# Save updated results back to Excel
+print("Saving results to Excel...")
+test_cases.to_excel(output_file, index=False)
+print("✅ Test execution completed. Results saved in:", output_file)
+
+# Write test evidence to an Excel file
+print("Saving test evidence...")
+
+wb = Workbook()
+for test_case_id, evidence in test_evidence.items():
+    ws = wb.create_sheet(title=test_case_id)
+    ws.append(["Test Case Information"])
+    for key, value in evidence["Test Case Information"].items():
+        ws.append([key, value])
+    
+    ws.append([])  # Empty row
+    
+    ws.append(["SQL Logic"])
+    ws.append([evidence["SQL Logic"]])
+    
+    ws.append([])  # Empty row
+    
+    ws.append(["SQL Output"])
+    for key, value in evidence["SQL Output"].items():
+        ws.append([key, value])
+
+# Remove the default sheet
+if "Sheet" in wb.sheetnames:
+    wb.remove(wb["Sheet"])
+
+wb.save(evidence_file)
+print("✅ Test execution evidence saved in:", evidence_file)
