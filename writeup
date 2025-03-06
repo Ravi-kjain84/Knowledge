@@ -1,1 +1,44 @@
 
+def compare_dataframes(df1, df2):
+    """Compare structure and data of two DataFrames with NULL and EMPTY handling."""
+
+    # Standardize column names (remove spaces, convert to lowercase)
+    df1.columns = df1.columns.str.strip().str.lower()
+    df2.columns = df2.columns.str.strip().str.lower()
+
+    # Convert all values to strings to prevent type mismatches
+    df1 = df1.astype(str)
+    df2 = df2.astype(str)
+
+    # Handle NULL, NONE, and empty values by converting them to a common placeholder ("NA")
+    df1 = df1.replace(["None", "NULL", "nan", "NaN", ""], "NA")
+    df2 = df2.replace(["None", "NULL", "nan", "NaN", ""], "NA")
+
+    # Remove leading/trailing spaces
+    df1 = df1.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df2 = df2.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+    # Convert text to lowercase for case-insensitive comparison
+    df1 = df1.applymap(lambda x: x.lower() if isinstance(x, str) else x)
+    df2 = df2.applymap(lambda x: x.lower() if isinstance(x, str) else x)
+
+    # Round floating-point values to avoid precision issues
+    df1 = df1.apply(pd.to_numeric, errors='ignore').round(4)
+    df2 = df2.apply(pd.to_numeric, errors='ignore').round(4)
+
+    # Convert date columns to a standardized format
+    for col in df1.columns:
+        if df1[col].dtype == "datetime64[ns]":
+            df1[col] = pd.to_datetime(df1[col])
+            df2[col] = pd.to_datetime(df2[col])
+
+    # Compare Column Structure
+    cols1, cols2 = set(df1.columns), set(df2.columns)
+    missing_cols_df1, missing_cols_df2 = list(cols2 - cols1), list(cols1 - cols2)
+
+    # Compare Row Data
+    matching_rows = pd.merge(df1, df2, how="inner")
+    missing_rows_df1 = pd.merge(df2, df1, how="left", indicator=True).query('_merge == "left_only"').drop("_merge", axis=1)
+    missing_rows_df2 = pd.merge(df1, df2, how="left", indicator=True).query('_merge == "left_only"').drop("_merge", axis=1)
+
+    return missing_cols_df1, missing_cols_df2, missing_rows_df1, missing_rows_df2, matching_rows
