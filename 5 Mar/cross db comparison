@@ -38,14 +38,24 @@ def fetch_bigquery_data(project, dataset, table):
     except Exception as e:
         return None, str(e)
 
-def compare_dataframes(df1, df2):
-    """Compare structure and data of two DataFrames."""
+def compare_dataframes(df1, df2, include_columns=None):
+    """Compare structure and data of two DataFrames with an option to compare specific columns."""
+
+    # Standardize column names (remove spaces, convert to lowercase)
     df1.columns = df1.columns.str.strip().str.lower()
     df2.columns = df2.columns.str.strip().str.lower()
 
+    # If specific columns are provided, filter both dataframes to include only those columns
+    if include_columns:
+        include_columns = [col.strip().lower() for col in include_columns]
+        df1 = df1[include_columns] if all(col in df1.columns for col in include_columns) else df1
+        df2 = df2[include_columns] if all(col in df2.columns for col in include_columns) else df2
+
+    # Compare Column Structure
     cols1, cols2 = set(df1.columns), set(df2.columns)
     missing_cols_df1, missing_cols_df2 = list(cols2 - cols1), list(cols1 - cols2)
 
+    # Compare Row Data
     matching_rows = pd.merge(df1, df2, how="inner")
     missing_rows_df1 = pd.merge(df2, df1, how="left", indicator=True).query('_merge == "left_only"').drop("_merge", axis=1)
     missing_rows_df2 = pd.merge(df1, df2, how="left", indicator=True).query('_merge == "left_only"').drop("_merge", axis=1)
@@ -58,13 +68,15 @@ def process_test_case(row):
     scenario = row["Scenario"]
     test_data = json.loads(row["Test Data"]) if str(row["Test Data"]) != "nan" else {}
 
+    include_columns = test_data.get("include_columns", None)
+
     # Compare BigQuery with BigQuery
     if "compare bigquery with bigquery" in scenario.lower():
         df1, err1 = fetch_bigquery_data(**test_data["bigquery1"])
         df2, err2 = fetch_bigquery_data(**test_data["bigquery2"])
         if err1 or err2:
             return "Error", f"BigQuery Fetch Error: {err1 or err2}"
-        missing_cols_df1, missing_cols_df2, missing_rows_df1, missing_rows_df2, matching_rows = compare_dataframes(df1, df2)
+        missing_cols_df1, missing_cols_df2, missing_rows_df1, missing_rows_df2, matching_rows = compare_dataframes(df1, df2, include_columns)
     
     # Compare BigQuery with Excel
     elif "compare bigquery with excel" in scenario.lower():
@@ -72,13 +84,13 @@ def process_test_case(row):
         df2 = pd.read_excel(test_data["excel"]["file"], sheet_name=test_data["excel"]["sheet"])
         if err1:
             return "Error", f"BigQuery Fetch Error: {err1}"
-        missing_cols_df1, missing_cols_df2, missing_rows_df1, missing_rows_df2, matching_rows = compare_dataframes(df1, df2)
+        missing_cols_df1, missing_cols_df2, missing_rows_df1, missing_rows_df2, matching_rows = compare_dataframes(df1, df2, include_columns)
 
     # Compare Excel with Excel
     elif "compare excel with excel" in scenario.lower():
         df1 = pd.read_excel(test_data["excel1"]["file"], sheet_name=test_data["excel1"]["sheet"])
         df2 = pd.read_excel(test_data["excel2"]["file"], sheet_name=test_data["excel2"]["sheet"])
-        missing_cols_df1, missing_cols_df2, missing_rows_df1, missing_rows_df2, matching_rows = compare_dataframes(df1, df2)
+        missing_cols_df1, missing_cols_df2, missing_rows_df1, missing_rows_df2, matching_rows = compare_dataframes(df1, df2, include_columns)
 
     # Store results
     result = "Pass" if not missing_cols_df1 and not missing_cols_df2 and missing_rows_df1.empty and missing_rows_df2.empty else "Fail"
@@ -90,10 +102,10 @@ def process_test_case(row):
         "Missing Columns Source 1": missing_cols_df1,
         "Missing Columns Source 2": missing_cols_df2,
         "Missing Rows Source 1": missing_rows_df1.to_dict(orient="records"),
-        "Missing Rows Source 2": missing_rows_df2.to_dict(orient="records")
+        "Missing Rows Source 2": missing_rows_df2.to_dict(orient="records"),
+        "Compared Columns": include_columns if include_columns else "All Columns"
     }
     return result
 
 test_cases["Result"] = test_cases.apply(process_test_case, axis=1)
 test_cases.to_excel(output_file, index=False)
-
