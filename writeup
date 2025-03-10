@@ -1,3 +1,124 @@
+Yes, you can apply formatting while using ws.append() in openpyxl by directly setting the styles and properties of the worksheet cells.
+
+Here’s how you can apply the following types of formatting:
+	1.	Increase the width of a column – Set ws.column_dimensions
+	2.	Merge columns in a row – Use ws.merge_cells()
+	3.	Wrap text within a cell – Use Alignment(wrap_text=True)
+
+Updated Example Based on Your Code
+
+Here’s an example incorporating these changes:
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+
+# Sample test evidence
+test_evidence = {
+    'Test_001': {
+        'Test Case Information': {'ID': '001', 'Description': 'Sample Test Case'},
+        'SQL Logic': {'Query': 'SELECT * FROM table WHERE value > 100;'},
+        'SQL Output': {'Result': 'Success'},
+        'Null Check': {'Status': 'Passed'}
+    }
+}
+
+wb = Workbook()
+
+for test_case_id, evidence in test_evidence.items():
+    ws = wb.create_sheet(title=str(test_case_id))
+    
+    # Set column width
+    ws.column_dimensions['A'].width = 25
+    ws.column_dimensions['B'].width = 50
+    
+    if "Test Case Information" in evidence:
+        # Add header and format it
+        ws.append(["Test Case Information"])
+        header_cell = ws.cell(row=ws.max_row, column=1)
+        header_cell.font = Font(bold=True, color="FFFFFF")
+        header_cell.fill = PatternFill("solid", fgColor="4F81BD")
+        
+        # Merge 5 columns and center align the text
+        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=5)
+        header_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+        for key, value in evidence["Test Case Information"].items():
+            ws.append([key, value])
+            
+        ws.append([])  # Empty row
+
+    if "SQL Logic" in evidence:
+        ws.append(["SQL Logic"])
+        header_cell = ws.cell(row=ws.max_row, column=1)
+        header_cell.font = Font(bold=True, color="FFFFFF")
+        header_cell.fill = PatternFill("solid", fgColor="4F81BD")
+        
+        # Merge cells for SQL Logic header
+        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=5)
+        header_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+        for key, value in evidence["SQL Logic"].items():
+            ws.append([key, value])
+        
+        ws.append([])
+
+    if "SQL Output" in evidence:
+        ws.append(["SQL Output"])
+        header_cell = ws.cell(row=ws.max_row, column=1)
+        header_cell.font = Font(bold=True, color="FFFFFF")
+        header_cell.fill = PatternFill("solid", fgColor="4F81BD")
+        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=5)
+        header_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+        for key, value in evidence["SQL Output"].items():
+            ws.append([key, value])
+        
+        ws.append([])
+
+    if "Null Check" in evidence:
+        ws.append(["Null Check"])
+        header_cell = ws.cell(row=ws.max_row, column=1)
+        header_cell.font = Font(bold=True, color="FFFFFF")
+        header_cell.fill = PatternFill("solid", fgColor="4F81BD")
+        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=5)
+        header_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+        for key, value in evidence["Null Check"].items():
+            ws.append([key, value])
+        
+        ws.append([])
+
+# Save the workbook
+wb.save("test_evidence.xlsx")
+
+
+
+⸻
+
+✅ Changes and Fixes:
+	1.	Increased column width:
+	•	ws.column_dimensions['A'].width = 25
+	2.	Merged cells for headers:
+	•	ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=5)
+	3.	Set alignment and wrap text:
+	•	Alignment(horizontal="center", vertical="center", wrap_text=True)
+	4.	Header Formatting:
+	•	Bold header text and background color using Font and PatternFill.
+
+⸻
+
+🚀 Outcome:
+	•	The headers are now bold, centered, and highlighted.
+	•	Column widths are adjusted for better visibility.
+	•	Merged cells are used where needed.
+	•	Text wrapping ensures no overflow issues.
+
+Let me know if you’d like to tweak any more details!
+
+
+
+
+
 
 def compare_dataframes(df1, df2):
     """Compare structure and data of two DataFrames with NULL and EMPTY handling."""
