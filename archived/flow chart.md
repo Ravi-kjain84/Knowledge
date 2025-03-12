@@ -1,9 +1,6 @@
-# BDD Automation Flowchart
-
-```mermaid
 graph TD
     Start([Start]) --> A[Read Excel Test Cases - Gherkin Format]
-    A --> B[Parse Test Case Keywords<br/>(Given, When, Then)]
+    A --> B[Parse Test Case Keywords\n(Given, When, Then)]
     B --> C{Identify Test Case Type}
 
     C --> D[Column Existence Check]
@@ -20,5 +17,5 @@ graph TD
 
     I --> J[Execute SQL on BigQuery]
     J --> K[Capture Results from BigQuery]
-    K --> L[Compile Results & Evidence into Excel Workbook<br/>(Separate Tabs per Test Case)]
+    K --> L[Compile Results & Evidence into Excel Workbook\n(Separate Tabs per Test Case)]
     L --> End([End])
