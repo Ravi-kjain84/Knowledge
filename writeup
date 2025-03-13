@@ -9,21 +9,20 @@ def copy_prod_data(df, file_path, sheet_name):
         # Step 2: Add "Modified_Customer_Group" column
         df['Modified_Customer_Group'] = df['Customer_Group'].apply(lambda x: 'PFS' if x == 'GPBB' else x)
 
-        # Step 3: Open the XLSM file using openpyxl
+        # Step 3: Open the XLSM file using openpyxl (keep VBA)
         book = load_workbook(file_path, keep_vba=True)
 
-        # Step 4: Remove existing sheet if it exists (to avoid duplication)
+        # Step 4: Remove existing sheet if it exists
         if sheet_name in book.sheetnames:
             del book[sheet_name]
 
         # Step 5: Write data to new sheet using ExcelWriter
         with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:
-            # Pass the workbook directly to the writer
             writer._book = book
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-            # Save the workbook
-            writer.close()
+        # Step 6: Save the workbook explicitly (to retain VBA macros)
+        book.save(file_path)
 
         print(f"Data written successfully to '{sheet_name}' in '{file_path}'.")
 
@@ -31,7 +30,6 @@ def copy_prod_data(df, file_path, sheet_name):
         print(f"Error: {e}")
 
 # Example Usage:
-# Sample DataFrame
 data = {
     'ID': [1, 2, 3],
     'Amount': [100, 200, 300],
