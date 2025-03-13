@@ -1,24 +1,40 @@
-import win32com.client
+import pandas as pd
+import os
 
-# Path to the Excel file
-file_path = r'C:\path\to\your\file.xlsm'
+def copy_prod_data(df, file_path, sheet_name):
+    try:
+        # Step 1: Add "ApproachAndClass" column
+        df['ApproachAndClass'] = df.iloc[:, -14].astype(str) + df.iloc[:, -13].astype(str)
 
-# Open Excel
-excel = win32com.client.Dispatch("Excel.Application")
-excel.Visible = True
+        # Step 2: Add "Modified_Customer_Group" column
+        df['Modified_Customer_Group'] = df.iloc[:, -12].apply(lambda x: 'PFS' if x == 'GPBB' else x)
 
-# Open the workbook
-workbook = excel.Workbooks.Open(file_path)
+        # Step 3: Write to Excel file
+        with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+        
+        print(f"Data written successfully to '{sheet_name}' in '{file_path}'.")
 
-# Run the macro (use the exact macro name)
-macro_name = 'Module1.MacroName'  # Format: ModuleName.MacroName
-excel.Application.Run(macro_name)
+    except Exception as e:
+        print(f"Error: {e}")
 
-# Save and close workbook
-workbook.Save()
-workbook.Close()
+# Example Usage:
+# Sample DataFrame
+data = {
+    'Col1': [1, 2, 3],
+    'Col2': [4, 5, 6],
+    'Col3': ['GPBB', 'ABC', 'XYZ'],
+    'Col4': ['Test1', 'Test2', 'Test3'],
+    'Col5': ['ClassA', 'ClassB', 'ClassC'],
+}
 
-# Quit Excel
-excel.Quit()
+# Convert to DataFrame
+df = pd.DataFrame(data)
 
-print("Macro executed successfully!")
+# File path and worksheet name
+file_path = 'output.xlsx'
+sheet_name = 'Production Data'
+
+# Call the function
+copy_prod_data(df, file_path, sheet_name)
+
