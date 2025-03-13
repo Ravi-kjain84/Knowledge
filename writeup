@@ -1,4 +1,25 @@
 import pandas as pd
+
+# Step 1: Read the Excel file
+file_path = 'path_to_your_excel_file.xlsx'
+df = pd.read_excel(file_path)
+
+# Example mapping DataFrame
+data = {'Regulator': ['BAU', 'XYZ'], 'Name': ['John', 'Michael']}
+mapping_df = pd.DataFrame(data)
+
+# Step 2: Perform the replacement based on the mapping
+df['SQL'] = df.apply(lambda row: row['SQL'].replace('{name}', 
+                       mapping_df.loc[mapping_df['Regulator'] == row['Regulator'], 'Name'].values[0]), axis=1)
+
+# Step 3: Display the result
+print(df)
+----------------
+
+
+
+
+import pandas as pd
 from openpyxl import load_workbook
 
 def copy_prod_data(df, file_path, sheet_name):
