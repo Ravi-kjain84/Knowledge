@@ -1,26 +1,31 @@
 import pandas as pd
 
-# Step 1: Read the Excel file
-file_path = 'path_to_your_excel_file.xlsx'
-df = pd.read_excel(file_path)
+# Step 1: Create the main DataFrame (mapping_df)
+mapping_data = {
+    'Regulator': ['BAU', 'XYZ'],
+    'Name': ['John', 'Michael'],
+    'Age': [30, 35],
+    'City': ['London', 'New York']
+}
+mapping_df = pd.DataFrame(mapping_data)
 
-# Example mapping DataFrame
-data = {'Regulator': ['BAU', 'XYZ'], 'Name': ['John', 'Michael'], 'Age': [30, 35], 'City': ['London', 'New York']}
-mapping_df = pd.DataFrame(data)
+# Step 2: Create the lookup DataFrame (template_df) with placeholders
+template_data = {
+    'Regulator': ['BAU', 'XYZ'],
+    'SQL': ['My name is {Name}, I am {Age} years old and live in {City}',
+            'The regulator is {Name} from {City} and is {Age} years old']
+}
+template_df = pd.DataFrame(template_data)
 
-# Step 2: Define a function to replace placeholders dynamically
-def replace_placeholders(row):
-    # Create a dictionary of replacements based on the regulator
-    replacements = mapping_df.loc[mapping_df['Regulator'] == row['Regulator']].to_dict('records')[0]
-    if replacements:
-        return row['SQL'].format(**replacements)
-    return row['SQL']
+# Step 3: Merge the template into the main table based on the regulator
+mapping_df = mapping_df.merge(template_df, on='Regulator', how='left')
 
-# Step 3: Apply the function to the DataFrame
-df['SQL'] = df.apply(replace_placeholders, axis=1)
+# Step 4: Replace placeholders using format()
+mapping_df['SQL'] = mapping_df.apply(lambda row: row['SQL'].format(**row), axis=1)
 
-# Step 4: Display the result
-print(df)
+# Step 5: Display the final table
+print(mapping_df)
+
 
 ----------------
 
