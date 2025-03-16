@@ -1,0 +1,116 @@
+import pandas as pd
+import re
+
+# Function to generate Gherkin Test Cases
+def generate_gherkin(target_df, mapping_df):
+    gherkin_cases = []
+    
+    for _, row in target_df.iterrows():
+        target_table = row['Target Table']
+        target_column = row['Target Attribute Name']
+        derivation = row['Derivation']
+
+        gherkin_cases.append(f"Feature: {target_table} - {target_column} Derivation")
+
+        # Use regex to extract IF-THEN-ELSE/ELIF structure dynamically
+        pattern = re.findall(r"(if|elif|else)(.*?)then(.*?)(?=(if|elif|else|$))", derivation, re.IGNORECASE)
+        
+        for condition in pattern:
+            keyword = condition[0].strip().lower()
+            if_condition = condition[1].strip()
+            then_result = condition[2].strip()
+            
+            if keyword == 'if':
+                gherkin_cases.append(f"""  Scenario: Derive {target_column} when {if_condition}
+    Given the table {target_table} contains data
+    When {if_condition}
+    Then the value of {target_column} should match {then_result}""")
+            
+            elif keyword == 'elif':
+                gherkin_cases.append(f"""  Scenario: Derive {target_column} when {if_condition}
+    Given the table {target_table} contains data
+    When {if_condition}
+    Then the value of {target_column} should match {then_result}""")
+            
+            elif keyword == 'else':
+                gherkin_cases.append(f"""  Scenario: Derive {target_column} when default case applies
+    Given the table {target_table} contains data
+    Then the value of {target_column} should match {then_result}""")
+
+    return "\n".join(gherkin_cases)
+
+# Function to generate SQL test cases dynamically
+def generate_sql(target_df, mapping_df):
+    sql_cases = []
+    
+    for _, row in target_df.iterrows():
+        target_table = row['Target Table']
+        target_column = row['Target Attribute Name']
+        derivation = row['Derivation']
+        
+        # Find source and mapping details
+        mapping = mapping_df[mapping_df['Target Column'] == target_column]
+        if not mapping.empty:
+            source_table = mapping['Source Table'].values[0]
+            source_column = mapping['Source Column'].values[0]
+            join_keys = mapping['Join Key'].values[0].split(",")  # Split and handle multiple join keys
+        else:
+            source_table, source_column, join_keys = None, None, []
+
+        # Build dynamic join condition based on multiple keys
+        if source_table and source_column and join_keys:
+            join_condition = " AND ".join(
+                [f"{target_table}.{key.strip()} = {source_table}.{key.strip()}" for key in join_keys]
+            )
+
+            # Extract IF-THEN-ELSE/ELIF structure dynamically
+            pattern = re.findall(r"(if|elif|else)(.*?)then(.*?)(?=(if|elif|else|$))", derivation, re.IGNORECASE)
+            
+            case_statements = []
+            for condition in pattern:
+                keyword = condition[0].strip().lower()
+                if_condition = condition[1].strip()
+                then_result = condition[2].strip()
+
+                # Translate IF/ELSE into SQL CASE format
+                if keyword == 'if':
+                    case_statements.append(f"WHEN {if_condition} AND {target_table}.{target_column} = (SELECT {source_column} FROM {source_table} WHERE {join_condition}) THEN 'PASS'")
+                elif keyword == 'elif':
+                    case_statements.append(f"WHEN {if_condition} AND {target_table}.{target_column} = (SELECT {source_column} FROM {source_table} WHERE {join_condition}) THEN 'PASS'")
+                elif keyword == 'else':
+                    case_statements.append(f"ELSE 'FAIL'")
+
+            sql_query = f"""
+SELECT 
+    CASE 
+        {' '.join(case_statements)}
+    END AS Test_Result,
+    {target_table}.*
+FROM 
+    {target_table};"""
+
+            sql_cases.append(sql_query)
+    
+    return "\n\n".join(sql_cases)
+
+# Load the input data (Sample CSV files)
+target_df = pd.read_csv('target_table.csv')  # Target table with derivation logic
+mapping_df = pd.read_csv('mapping_table.csv')  # Mapping table (join keys, source, target)
+source_df = pd.read_csv('source_table.csv')  # Source table details
+
+# Generate Gherkin test cases
+gherkin_output = generate_gherkin(target_df, mapping_df)
+print("\n=== GENERATED GHERKIN TEST CASES ===")
+print(gherkin_output)
+
+# Generate SQL test cases
+sql_output = generate_sql(target_df, mapping_df)
+print("\n=== GENERATED SQL TEST CASES ===")
+print(sql_output)
+
+# Save to files
+with open('gherkin_test_cases.feature', 'w') as file:
+    file.write(gherkin_output)
+
+with open('sql_test_cases.sql', 'w') as file:
+    file.write(sql_output)
