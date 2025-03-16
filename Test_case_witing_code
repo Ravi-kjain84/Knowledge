@@ -114,3 +114,17 @@ with open('gherkin_test_cases.feature', 'w') as file:
 
 with open('sql_test_cases.sql', 'w') as file:
     file.write(sql_output)
+
+1. Target Table (target_table.csv)
+Target Table	Target Attribute Name	Derivation
+FOTC_GRP_RWA_RP_OUTPUT_INTERIM	Post_CRM_Name	If Guaranteed_Flag = 'Y' then FOTC_GRP_RWA_RP_OUTPUT_REPAIR.Guarantor_Name elif Status = 'Active' then Customer_Name else Pre_CRM_Name
+
+2. Source Table (source_table.csv)
+Source Table	Source Column	Data Type
+FOTC_GRP_RWA_RP_OUTPUT_REPAIR	Guarantor_Name	STRING
+CUSTOMER_TABLE	Customer_Name	STRING
+
+3. Mapping Table (mapping_table.csv)
+Target Table	Target Column	Source Table	Source Column	Join Key
+FOTC_GRP_RWA_RP_OUTPUT_INTERIM	Post_CRM_Name	FOTC_GRP_RWA_RP_OUTPUT_REPAIR	Guarantor_Name	ID, Date
+
