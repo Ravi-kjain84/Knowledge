@@ -1,83 +1,11 @@
-import pandas as pd
+Challenge: Strengthening Testing Team Capabilities
+Testing teams have varying levels of expertise in tools, techniques, domain knowledge, and agile methodologies, which may impact overall testing effectiveness. Aligning skills across teams can help improve consistency and enhance the quality of testing outcomes. A standardized onboarding package will also help new joiners quickly adapt to testing processes, tools, and business context.
 
-# Step 1: Create the main DataFrame (mapping_df)
-mapping_data = {
-    'Regulator': ['BAU', 'XYZ'],
-    'Name': ['John', 'Michael'],
-    'Age': [30, 35],
-    'City': ['London', 'New York']
-}
-mapping_df = pd.DataFrame(mapping_data)
+Solution:
+The training framework should cover:
+	•	Agile Testing – Consistent application of agile testing practices.
+	•	Technical Skills – Training on tools like Python and data visualization.
+	•	Domain Knowledge – Value stream-specific training to improve business understanding.
+	•	Stakeholder Management – Enhancing communication and collaboration with business and technical teams.
 
-# Step 2: Create the lookup DataFrame (template_df) with placeholders
-template_data = {
-    'Regulator': ['BAU', 'XYZ'],
-    'SQL': ['My name is {Name}, I am {Age} years old and live in {City}',
-            'The regulator is {Name} from {City} and is {Age} years old']
-}
-template_df = pd.DataFrame(template_data)
-
-# Step 3: Merge the template into the main table based on the regulator
-mapping_df = mapping_df.merge(template_df, on='Regulator', how='left')
-
-# Step 4: Replace placeholders using format()
-mapping_df['SQL'] = mapping_df.apply(lambda row: row['SQL'].format(**row), axis=1)
-
-# Step 5: Display the final table
-print(mapping_df)
-
-
-----------------
-
-
-
-
-import pandas as pd
-from openpyxl import load_workbook
-
-def copy_prod_data(df, file_path, sheet_name):
-    try:
-        # Step 1: Add "ApproachAndClass" column
-        df['ApproachAndClass'] = df['ClassA'] + df['ClassB']
-
-        # Step 2: Add "Modified_Customer_Group" column
-        df['Modified_Customer_Group'] = df['Customer_Group'].apply(lambda x: 'PFS' if x == 'GPBB' else x)
-
-        # Step 3: Open the XLSM file using openpyxl (keep VBA)
-        book = load_workbook(file_path, keep_vba=True)
-
-        # Step 4: Remove existing sheet if it exists
-        if sheet_name in book.sheetnames:
-            del book[sheet_name]
-
-        # Step 5: Write data to new sheet using ExcelWriter
-        with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:
-            writer._book = book
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-        # Step 6: Save the workbook explicitly (to retain VBA macros)
-        book.save(file_path)
-
-        print(f"Data written successfully to '{sheet_name}' in '{file_path}'.")
-
-    except Exception as e:
-        print(f"Error: {e}")
-
-# Example Usage:
-data = {
-    'ID': [1, 2, 3],
-    'Amount': [100, 200, 300],
-    'Customer_Group': ['GPBB', 'ABC', 'XYZ'],
-    'ClassA': ['Test1', 'Test2', 'Test3'],
-    'ClassB': ['ClassA', 'ClassB', 'ClassC']
-}
-
-# Convert to DataFrame
-df = pd.DataFrame(data)
-
-# File path and worksheet name
-file_path = 'output.xlsm'
-sheet_name = 'Production Data'
-
-# Call the function
-copy_prod_data(df, file_path, sheet_name)
+This approach will strengthen testing capabilities, improve efficiency, and drive consistent results.
