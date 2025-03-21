@@ -1,11 +1,29 @@
-Challenge: Strengthening Testing Team Capabilities
-Testing teams have varying levels of expertise in tools, techniques, domain knowledge, and agile methodologies, which may impact overall testing effectiveness. Aligning skills across teams can help improve consistency and enhance the quality of testing outcomes. A standardized onboarding package will also help new joiners quickly adapt to testing processes, tools, and business context.
+Testing KPIs for Effectiveness and Efficiency
 
-Solution:
-The training framework should cover:
-	•	Agile Testing – Consistent application of agile testing practices.
-	•	Technical Skills – Training on tools like Python and data visualization.
-	•	Domain Knowledge – Value stream-specific training to improve business understanding.
-	•	Stakeholder Management – Enhancing communication and collaboration with business and technical teams.
+To measure the success and maturity of the Testing Center of Excellence (TCoE), it is essential to define a clear set of Key Performance Indicators (KPIs) that reflect both the effectiveness and efficiency of the testing process. These KPIs will provide quantitative insights into the performance of testing activities, highlight gaps, and support continuous improvement. The proposed KPIs are structured around two key value dimensions: Effectiveness and Efficiency.
 
-This approach will strengthen testing capabilities, improve efficiency, and drive consistent results.
+Effectiveness KPIs
+
+Effectiveness KPIs measure the ability of the testing process to identify defects early, ensure traceability, and minimize leakage into production. These KPIs are designed to improve the overall quality of testing outcomes and reduce production issues.
+	1.	Pre-UAT Defect Containment
+This KPI measures the percentage of defects identified and resolved during unit or functional testing before they reach UAT or production. The objective is to detect and fix defects at the earliest stage of the development lifecycle to avoid costly fixes in production and reduce the risk of operational disruption. The target for this KPI is set at 100%, which reflects the goal of achieving complete defect containment within the early testing phases. High containment indicates a mature and effective testing process, reducing the likelihood of issues surfacing in UAT or production.
+	2.	Traceability
+Traceability measures the percentage of defects linked to specific requirements and test cases in JIRA. Ensuring 100% traceability enhances transparency and control over the testing process, enabling teams to track the origin of defects, understand testing coverage, and improve accountability. Strong traceability ensures that all requirements are effectively validated, reducing the risk of missed requirements or unexpected functionality gaps. The target for this KPI is set at 100%, reinforcing the need for comprehensive and structured test coverage.
+
+⸻
+
+Efficiency KPIs
+
+Efficiency KPIs focus on optimizing the speed, coverage, and availability of test cases to enhance the overall testing process. These KPIs aim to reduce cycle time, improve automation levels, and ensure that test cases are prepared and available when needed.
+	1.	Automation Coverage
+This KPI measures the percentage of regression and functional test cases automated in JIRA. Higher automation coverage improves testing speed, reduces manual effort, and enhances test repeatability. The target for this KPI is 70%, striking a balance between automation efficiency and the need for manual testing where required. Achieving high automation coverage increases the ability to run tests frequently and detect issues earlier.
+	2.	Test Cycle Time
+Test cycle time measures the average time taken from “Ready for Testing” to “Testing Complete” in JIRA. Reducing test cycle time reflects improvements in testing efficiency and faster feedback loops. The target is to reduce the test cycle time by 50% compared to the baseline, ensuring faster releases and improved responsiveness to changes.
+	3.	Test Case Availability
+This KPI measures the percentage of test cases created and uploaded to JIRA before the release baseline is completed. High test case availability ensures that the testing team is prepared in advance, reducing delays and improving overall test execution readiness. The target for this KPI is set at 100%, reflecting the need for complete test case readiness before the release cycle begins.
+
+⸻
+
+Rationale and Expected Outcomes
+
+By focusing on both effectiveness and efficiency, these KPIs aim to create a balanced testing framework that ensures high-quality outcomes while optimizing time and resources. Effective defect containment and traceability will minimize production issues and improve overall testing accuracy. Meanwhile, improving automation coverage, reducing cycle time, and ensuring test case availability will drive faster execution and increase the capacity to handle more complex testing scenarios. Collectively, these KPIs will provide a clear view of testing maturity, support continuous improvement, and strengthen alignment with business goals.
