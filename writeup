@@ -1,3 +1,22 @@
+Challenge 10: Enhancing Testing to Cover Downstream Impacts of Implemented Changes
+When a new change is implemented, most testing activities are typically confined to the technical, functional, and current Business-As-Usual (BAU) scenarios. However, late-stage production defects often arise because downstream systems were not tested against the upcoming change. This gap increases the risk of system instability and operational disruptions.
+
+Solution:
+Introduce a comprehensive downstream impact analysis as part of the testing process. Ensure that test cases cover not only the direct functional and technical impacts but also the downstream system dependencies. Develop cross-system test cases and incorporate them into the regression suite to validate the end-to-end impact of changes.
+
+Benefits:
+This approach will improve system stability and operational resilience by ensuring that downstream dependencies are tested alongside direct functional changes. It will enable early detection of downstream issues, reducing production failures and improving the overall quality of releases. Stronger alignment between system components and business processes will lead to smoother post-implementation performance and better user satisfaction.
+
+Challenge 10: Missed Opportunity to Test Existing Production Controls and Validations
+Currently, testing teams are not covering existing Business-As-Usual (BAU) controls and validation rules performed during daily, monthly, or quarterly reporting cycles. This results in gaps and increased risk of production issues.
+
+Solution:
+Incorporate existing end-user validations and controls into regression testing to ensure comprehensive coverage of BAU processes. Use automated checks to validate data and system behavior against predefined rules.
+
+Benefits:
+This approach will reduce the risk of production defects by ensuring that BAU processes are thoroughly validated and tested. It will improve confidence in test results by establishing consistent and accurate validation against business requirements. Enhanced alignment with business processes will lead to smoother operational performance and reduced risk of disruptions during reporting cycles.
+...................
+
 Testing KPIs for Effectiveness and Efficiency
 
 To measure the success and maturity of the Testing Center of Excellence (TCoE), it is essential to define a clear set of Key Performance Indicators (KPIs) that reflect both the effectiveness and efficiency of the testing process. These KPIs will provide quantitative insights into the performance of testing activities, highlight gaps, and support continuous improvement. The proposed KPIs are structured around two key value dimensions: Effectiveness and Efficiency.
