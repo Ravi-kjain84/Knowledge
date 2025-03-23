@@ -1,3 +1,38 @@
+8.8. Peer Review and Accountability
+
+All test cases and test evidence should undergo a formal peer review process to improve accuracy and completeness. Test cases should be reviewed and logged in JIRA by a separate reviewer to identify any gaps or misalignments. The Test Lead is accountable for ensuring the review is completed, either by personally reviewing or delegating it to a qualified team member. Test evidence in JIRA should also be reviewed to confirm alignment with expected outcomes and business requirements.
+
+Benefits:
+	•	Improves accuracy and consistency of test cases and evidence.
+	•	Enhances defect detection and resolution by addressing gaps early.
+	•	Strengthens accountability and governance over the testing process.
+
+⸻
+
+8.9. Test Case Reusability and Automation
+
+Testing teams should identify and mark test cases as reusable or non-reusable during retrospectives. Reusable test cases should be prioritized for automation to improve efficiency and reduce manual effort. A structured repository of reusable test cases should be maintained in JIRA to simplify future test creation and execution.
+
+Benefits:
+	•	Reduces redundancy and effort in test creation.
+	•	Improves efficiency through automated execution of reusable tests.
+	•	Enhances consistency and coverage across similar test scenarios.
+
+⸻
+
+8.10. Creating Test Releases in JIRA
+
+A structured test release should be created in JIRA for every project, change release, or maintenance release. Test cases, execution results, and defects should be linked to the release for better tracking and visibility. This will provide a clear view of test progress, defect resolution, and release readiness.
+
+Benefits:
+	•	Improves tracking and monitoring of test execution and defects.
+	•	Enhances traceability by linking test cases and outcomes to specific releases.
+	•	Provides better visibility into release readiness and decision-making.
+
+
+
+
+......
 Challenge 10: Enhancing Testing to Cover Downstream Impacts of Implemented Changes
 When a new change is implemented, most testing activities are typically confined to the technical, functional, and current Business-As-Usual (BAU) scenarios. However, late-stage production defects often arise because downstream systems were not tested against the upcoming change. This gap increases the risk of system instability and operational disruptions.
 
